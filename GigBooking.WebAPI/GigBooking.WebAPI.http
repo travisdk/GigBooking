@@ -1,0 +1,6 @@
+@GigBooking.WebAPI_HostAddress = http://localhost:5241
+
+GET {{GigBooking.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
