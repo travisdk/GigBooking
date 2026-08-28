@@ -1,25 +1,26 @@
 ﻿using GigBooking.Domain.Primitives;
+using GigBooking.Domain.ValueObjects;
 
 namespace GigBooking.Domain.Entities;
 
-public sealed class Gig : Entity
+public sealed class Gig : Entity<GigId>
 {
-    public Guid ArtistId { get; private set; }
-    public Guid VenueId { get; private set; }
+    public ArtistId ArtistId { get; private set; }
+    public VenueId VenueId { get; private set; }
     public DateTime ScheduledAt { get; private set; }
 
-    private Gig(Guid Id, Guid ArtistId, Guid VenueId, DateTime ScheduledAt)  : base(Id)
+    private Gig(GigId id, ArtistId artistId, VenueId venueId, DateTime scheduledAt)  : base(id)
     {
-        this.ArtistId = ArtistId;
-        this.VenueId = VenueId;
-        this.ScheduledAt = ScheduledAt;
+        this.ArtistId = artistId;
+        this.VenueId = venueId; 
+        this.ScheduledAt = scheduledAt;
     }
-    public static Result<Gig> Create(Guid Id, Guid ArtistId, Guid VenueId, DateTime ScheduledAt)
+    public static Result<Gig> Create(GigId id, ArtistId artistId, VenueId venueId, DateTime scheduledAt)
     {
-        if (ScheduledAt < DateTime.UtcNow)
+        if (scheduledAt < DateTime.UtcNow)
         {
             return Result<Gig>.Failure(new Error("InvalidScheduledAt", "Scheduled date and time cannot be in the past."));
         }
-        return Result<Gig>.Success(new Gig(Id, ArtistId, VenueId, ScheduledAt));
+        return Result<Gig>.Success(new Gig(id, artistId, venueId, scheduledAt));
     }
 }

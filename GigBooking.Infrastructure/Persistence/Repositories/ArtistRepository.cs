@@ -1,9 +1,9 @@
 ﻿using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.Entities;
-using GigBooking.Infrastructure.Data;
+using GigBooking.Domain.ValueObjects;
 using Microsoft.EntityFrameworkCore;
 
-namespace GigBooking.Infrastructure.Repositories;
+namespace GigBooking.Infrastructure.Persistence.Repositories;
 
 public class ArtistRepository : IArtistRepository
 {
@@ -13,8 +13,12 @@ public class ArtistRepository : IArtistRepository
     {
         _context = context;
     }
-
-    public async Task<Artist?> GetByIdAsync(Guid id, CancellationToken ctx = default)
+    public async Task<IEnumerable<Artist>> GetAllArtistsAsync(CancellationToken ctx)
+    {
+       var artists = await _context.Set<Artist>().AsNoTracking().ToListAsync(ctx);
+       return artists;
+    }
+    public async Task<Artist?> GetByIdAsync(ArtistId id, CancellationToken ctx = default)
     {
         var artist = await _context.Set<Artist>().FirstOrDefaultAsync(a => a.Id == id, ctx);
         if (artist == null)
@@ -24,7 +28,7 @@ public class ArtistRepository : IArtistRepository
         return artist;
     } 
     
-    public async Task<Artist?> GetByIdReadOnlyAsync(Guid id, CancellationToken ctx = default)
+    public async Task<Artist?> GetByIdReadOnlyAsync(ArtistId id, CancellationToken ctx = default)
     {
         var artist = await _context.Set<Artist>().AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ctx);
 
@@ -40,4 +44,6 @@ public class ArtistRepository : IArtistRepository
         _context.Set<Artist>().Add(artist);
         return artist;
     }
+
+
 }

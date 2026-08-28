@@ -1,0 +1,2622 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: **/bin/**, **/obj/**
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+GigBooking.Application/
+  Artists/
+    Commands/
+      CreateArtistCommand/
+        CreateArtistCommand.cs
+    DTOs/
+      ArtistDTO.cs
+    Queries/
+      GetArtist/
+        GetArtistQuery.cs
+      GetArtists/
+        GetArtistsQuery.cs
+  Common/
+    Interfaces/
+      IGigReadRepository.cs
+      IGuidGenerator.cs
+  Gigs/
+    Commands/
+      CreateGigCommand.cs
+    DTOs/
+      GigCreatedDTO.cs
+      GigDTO.cs
+    Queries/
+      GetGig/
+        GetGigQuery.cs
+      GetGigs/
+        GetGigsQuery.cs
+  Venues/
+    Commands/
+      CreateVenueCommand/
+        CreateVenueCommand.cs
+    DTOs/
+      VenueDTO.cs
+    Queries/
+      GetVenue/
+        GetVenueQuery.cs
+      GetVenues/
+        GetVenuesQuery.cs
+  AssemblyReference.cs
+  DependencyInjection.cs
+  GigBooking.Application.csproj
+GigBooking.Domain/
+  Abstractions/
+    IArtistRepository.cs
+    IGigRepository.cs
+    IUnitOfWork.cs
+    IVenueRepository.cs
+  Entities/
+    Artist.cs
+    Gig.cs
+    Venue.cs
+  Errors/
+    DomainErrors.cs
+  Primitives/
+    Entity.cs
+    Error.cs
+    Result.cs
+  ValueObjects/
+    ArtistId.cs
+    GigId.cs
+    VenueId.cs
+  GigBooking.Domain.csproj
+GigBooking.Infrastructure/
+  Persistence/
+    Configurations/
+      ArtistConfiguration.cs
+      GigConfiguration.cs
+      VenueConfiguration.cs
+    Migrations/
+      20260824092551_Initial-Create.cs
+      20260824092551_Initial-Create.Designer.cs
+      20260824095135_AddedArtistAndVenue.cs
+      20260824095135_AddedArtistAndVenue.Designer.cs
+      20260827103828_ValueObject_Keys.cs
+      20260827103828_ValueObject_Keys.Designer.cs
+      AppDbContextModelSnapshot.cs
+    Repositories/
+      ArtistRepository.cs
+      GigRepository.cs
+      VenueRepository.cs
+    AppDbContext.cs
+  Services/
+    GuidGenerator.cs
+  AssemblyReference.cs
+  DependencyInjection.cs
+  GigBooking.Infrastructure.csproj
+GigBooking.Presentation/
+  Endpoints/
+    Endpoints.cs
+  GigBooking.Presentation.csproj
+GigBooking.WebAPI/
+  Endpoints/
+    Endpoints.cs
+  Properties/
+    launchSettings.json
+  appsettings.Development.json
+  appsettings.json
+  gigbooking.db
+  gigbooking.db-shm
+  gigbooking.db-wal
+  GigBooking.WebAPI.csproj
+  GigBooking.WebAPI.http
+  Program.cs
+.gitattributes
+.gitignore
+GigBooking.slnx
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="GigBooking.Application/Artists/Commands/CreateArtistCommand/CreateArtistCommand.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+using MediatR;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.Primitives;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Application.Artists.DTOs;
+using GigBooking.Application.Common.Interfaces;
+using GigBooking.Domain.ValueObjects;
+namespace GigBooking.Application.Artists.Commands.CreateArtistCommand;
+
+public sealed record CreateArtistCommand(string Name) : IRequest<Result<ArtistDTO>>;
+
+
+public  class CreateArtistCommandHandler : IRequestHandler<CreateArtistCommand, Result<ArtistDTO>>
+{
+    private readonly IArtistRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IGuidGenerator _guidGenerator;
+
+    public CreateArtistCommandHandler(IArtistRepository repository, IUnitOfWork unitOfWork, IGuidGenerator guidGenerator)
+    {
+
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _guidGenerator = guidGenerator;
+    }
+
+    public async Task<Result<ArtistDTO>> Handle(CreateArtistCommand request, CancellationToken cancellationToken)
+    {
+        var newGuid = _guidGenerator.GenerateGuid();
+        var artistResult = Artist.Create(new ArtistId(newGuid), request.Name);
+        
+        if (artistResult.IsFailure)
+        {
+            return Result<ArtistDTO>.Failure(artistResult.Error!);
+        }
+        
+        Artist artist = artistResult.Value; 
+        _repository.Add(artist);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name)  );
+    }
+
+}
+</file>
+
+<file path="GigBooking.Application/Artists/DTOs/ArtistDTO.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application.Artists.DTOs;
+
+public sealed record ArtistDTO(Guid Id, string Name);
+</file>
+
+<file path="GigBooking.Application/Artists/Queries/GetArtist/GetArtistQuery.cs">
+using GigBooking.Application.Artists.DTOs;
+using MediatR;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.Primitives;
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Errors;
+using GigBooking.Domain.ValueObjects;
+
+namespace GigBooking.Application.Artists.Queries.GetArtist;
+
+public sealed record GetArtistQuery(Guid Id) : IRequest<Result<ArtistDTO>>;
+
+
+public class GetArtistQueryHandler : IRequestHandler<GetArtistQuery, Result<ArtistDTO>>
+
+{
+    private readonly IArtistRepository _repository;
+
+    public GetArtistQueryHandler(IArtistRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public async Task<Result<ArtistDTO>> Handle(GetArtistQuery request, CancellationToken ctx)
+    {
+
+        var artist = await _repository.GetByIdReadOnlyAsync(new ArtistId(request.Id), ctx);
+        if (artist == null)
+        {
+            return Result<ArtistDTO>.Failure(DomainErrors.Artist.KeyNotFound);
+        }
+
+        return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name));
+
+    }
+}
+</file>
+
+<file path="GigBooking.Application/Artists/Queries/GetArtists/GetArtistsQuery.cs">
+using GigBooking.Application.Artists.DTOs;
+using MediatR;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.Primitives;
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Errors;
+using GigBooking.Domain.ValueObjects;
+
+namespace GigBooking.Application.Artists.Queries.GetArtists;
+
+public sealed record GetArtistsQuery() : IRequest<Result<IEnumerable<ArtistDTO>>>;
+
+
+public class GetArtistsQueryHandler : IRequestHandler<GetArtistsQuery, Result<IEnumerable<ArtistDTO>>>
+
+{
+    private readonly IArtistRepository _repository;
+
+    public GetArtistsQueryHandler(IArtistRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public async Task<Result<IEnumerable<ArtistDTO>>> Handle(GetArtistsQuery request, CancellationToken ctx)
+    {
+
+        var artists = await _repository.GetAllArtistsAsync(ctx);
+        var result = artists.ToList().Select(artist => new ArtistDTO(artist.Id.Value, artist.Name));
+
+        return Result<IEnumerable<ArtistDTO>>.Success(result);
+
+    }
+}
+</file>
+
+<file path="GigBooking.Application/Common/Interfaces/IGigReadRepository.cs">
+using GigBooking.Application.Gigs.DTOs;
+using GigBooking.Domain.ValueObjects;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application.Common.Interfaces;
+
+public interface IGigReadRepository  // pure Query repo with join needs
+{
+    Task<IEnumerable<GigDTO>> GetAllGigsWithDetailsAsync(CancellationToken cancellationToken = default);
+    Task<GigDTO?> GetGigWithDetailsByIdAsync(GigId id, CancellationToken cancellationToken = default);
+}
+</file>
+
+<file path="GigBooking.Application/Common/Interfaces/IGuidGenerator.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application.Common.Interfaces;
+
+
+    public interface IGuidGenerator
+    {
+
+        public Guid GenerateGuid();
+
+    }
+</file>
+
+<file path="GigBooking.Application/Gigs/Commands/CreateGigCommand.cs">
+using GigBooking.Application.Common.Interfaces;
+using GigBooking.Application.Gigs.DTOs;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Primitives;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using GigBooking.Domain.Errors;
+using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application.Gigs.Commands;
+
+public sealed record CreateGigCommand(Guid artistId, Guid venueId, DateTime scheduledAt) : IRequest<Result<GigCreatedDTO>>;
+
+public class CreateGigCommandHandler : IRequestHandler<CreateGigCommand, Result<GigCreatedDTO>>
+{
+    private readonly IGigRepository _repository;
+    private readonly IGuidGenerator _guidGenerator;
+    private readonly IUnitOfWork _unitOfWork;
+
+    public CreateGigCommandHandler(IGigRepository repository, IUnitOfWork unitOfWork, IGuidGenerator guidGenerator)
+    {
+        _repository = repository;
+        _guidGenerator = guidGenerator;
+        _unitOfWork = unitOfWork;
+    }
+    public async Task<Result<GigCreatedDTO>> Handle(CreateGigCommand request, CancellationToken cancellationToken)
+    {
+        // TESTS TO SEE IF ARTIST AND VENUE EXISTS NEEDE
+        // DOMAIN LOGIC NEEDS TO BE IMPLEMENTED TO CHECK VALIDITIES LATER
+
+        var gigId = new GigId(_guidGenerator.GenerateGuid());
+        var gigResult = Gig.Create(gigId, new ArtistId(request.artistId), new VenueId(request.venueId)
+              , request.scheduledAt);
+        var gig = gigResult.Value;
+
+        if (gigResult.IsFailure)
+        {
+            return Result<GigCreatedDTO>.Failure(gigResult.Error!);
+        }
+        _repository.Add(gig);
+      
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+        GigCreatedDTO gigDTO = new GigCreatedDTO(gig.Id.Value, gig.ArtistId.Value,
+              gig.VenueId.Value, gig.ScheduledAt); 
+        return Result<GigCreatedDTO>.Success(gigDTO);        // DO WE NEED TO RETURN DTO??    
+        
+    }
+}
+</file>
+
+<file path="GigBooking.Application/Gigs/DTOs/GigCreatedDTO.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application.Gigs.DTOs;
+
+public sealed record GigCreatedDTO(Guid Id, Guid ArtistId, Guid VenueId, DateTime ScheduledAt);
+</file>
+
+<file path="GigBooking.Application/Gigs/DTOs/GigDTO.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application.Gigs.DTOs;
+
+public sealed record GigDTO(
+    Guid Id,
+    Guid ArtistId,
+    Guid VenueId,
+    DateTime ScheduledAt,
+    string ArtistName,
+    string VenueName
+);
+</file>
+
+<file path="GigBooking.Application/Gigs/Queries/GetGig/GetGigQuery.cs">
+using GigBooking.Application.Common.Interfaces;
+using GigBooking.Application.Gigs.DTOs;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Errors;
+using GigBooking.Domain.Primitives;
+using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application.Gigs.Queries.GetGig;
+
+public sealed record GetGigQuery(Guid Id) : IRequest<Result<GigCreatedDTO>>;
+
+
+public class GetGigQueryHandler : IRequestHandler<GetGigQuery, Result<GigCreatedDTO>>
+
+{
+    private readonly IGigRepository _repository;
+    public GetGigQueryHandler(IGigRepository repository)
+    {
+        _repository = repository;
+    }
+    public async Task<Result<GigCreatedDTO>> Handle(GetGigQuery request, CancellationToken ctx)
+    {
+        var gig = await _repository.GetByIdReadOnlyAsync(new Domain.ValueObjects.GigId(request.Id), ctx);
+        if (gig == null)
+        {
+            return Result<GigCreatedDTO>.Failure(DomainErrors.Gig.KeyNotFound);
+        }
+        return Result<GigCreatedDTO>.Success(new GigCreatedDTO(gig.Id.Value, gig.ArtistId.Value, gig.VenueId.Value, gig.ScheduledAt));
+    }
+}
+</file>
+
+<file path="GigBooking.Application/Gigs/Queries/GetGigs/GetGigsQuery.cs">
+using GigBooking.Application.Common.Interfaces;
+using GigBooking.Application.Gigs.DTOs;
+using GigBooking.Application.Venues.DTOs;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Primitives;
+using MediatR;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+
+namespace GigBooking.Application.Venues.Queries.GetVenues;
+
+public sealed record GetGigsQuery() : IRequest<Result<IEnumerable<GigDTO>>>;
+public class GetGigsQueryHandler : IRequestHandler<GetGigsQuery, Result<IEnumerable<GigDTO>>>
+{
+    private readonly IGigReadRepository _repository;
+
+    public GetGigsQueryHandler(IGigReadRepository repository) { 
+    
+        _repository = repository;
+
+    }
+    public async Task<Result<IEnumerable<GigDTO>>> Handle(GetGigsQuery request, CancellationToken ctx)
+    {
+        var gigs = await _repository.GetAllGigsWithDetailsAsync(ctx);
+        return Result<IEnumerable<GigDTO>>.Success(gigs);
+    }
+}
+</file>
+
+<file path="GigBooking.Application/Venues/Commands/CreateVenueCommand/CreateVenueCommand.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+using MediatR;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.Primitives;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Application.Venues.DTOs;
+using GigBooking.Application.Common.Interfaces;
+using GigBooking.Domain.ValueObjects;
+namespace GigBooking.Application.Venues.Commands.CreateVenueCommand;
+
+public sealed record CreateVenueCommand(string Name) : IRequest<Result<VenueDTO>>;
+
+
+public  class CreateVenueCommandHandler : IRequestHandler<CreateVenueCommand, Result<VenueDTO>>
+{
+    private readonly IVenueRepository _repository;
+    private readonly IUnitOfWork _unitOfWork;
+    private readonly IGuidGenerator _guidGenerator;
+
+    public CreateVenueCommandHandler(IVenueRepository repository, IUnitOfWork unitOfWork, IGuidGenerator guidGenerator)
+    {
+
+        _repository = repository;
+        _unitOfWork = unitOfWork;
+        _guidGenerator = guidGenerator;
+    }
+
+    public async Task<Result<VenueDTO>> Handle(CreateVenueCommand request, CancellationToken cancellationToken)
+    {
+        var newGuid = _guidGenerator.GenerateGuid();
+
+        var venueResult = Venue.Create(new VenueId(newGuid), request.Name);
+        
+        if (venueResult.IsFailure)
+        {
+            return Result<VenueDTO>.Failure(venueResult.Error!);
+        }
+        
+        Venue venue = venueResult.Value; 
+        _repository.Add(venue);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name)  );
+    }
+
+}
+</file>
+
+<file path="GigBooking.Application/Venues/DTOs/VenueDTO.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application.Venues.DTOs;
+
+public sealed record VenueDTO(Guid Id, string Name);
+</file>
+
+<file path="GigBooking.Application/Venues/Queries/GetVenue/GetVenueQuery.cs">
+using GigBooking.Application.Artists.DTOs;
+using MediatR;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.Primitives;
+
+using System;
+using System.Collections.Generic;
+using System.Text;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Errors;
+using GigBooking.Application.Venues.DTOs;
+using GigBooking.Domain.ValueObjects;
+
+namespace GigBooking.Application.Venues.Queries.GetVenue;
+
+public sealed record GetVenueQuery(Guid Id) : IRequest<Result<VenueDTO>>;
+
+
+public class GetVenueQueryHandler : IRequestHandler<GetVenueQuery, Result<VenueDTO>>
+
+{
+    private readonly IVenueRepository _repository;
+
+    public GetVenueQueryHandler(IVenueRepository repository)
+    {
+        _repository = repository;
+    }
+
+    public async Task<Result<VenueDTO>> Handle(GetVenueQuery request, CancellationToken ctx)
+    {
+
+        var venue = await _repository.GetByIdReadOnlyAsync(new VenueId(request.Id), ctx);
+        if (venue == null)
+        {
+            return Result<VenueDTO>.Failure(DomainErrors.Venue.KeyNotFound);
+        }
+
+        return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name));
+
+    }
+}
+</file>
+
+<file path="GigBooking.Application/Venues/Queries/GetVenues/GetVenuesQuery.cs">
+using GigBooking.Application.Venues.DTOs;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Primitives;
+using MediatR;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
+
+namespace GigBooking.Application.Venues.Queries.GetVenues;
+
+public sealed record GetVenuesQuery() : IRequest<Result<IEnumerable<VenueDTO>>>;
+public class GetVenuesQueryHandler : IRequestHandler<GetVenuesQuery, Result<IEnumerable<VenueDTO>>>
+{
+    private readonly IVenueRepository _repository;
+
+    public GetVenuesQueryHandler(IVenueRepository repository) { 
+    
+        _repository = repository;
+
+    }
+    public async Task<Result<IEnumerable<VenueDTO>>> Handle(GetVenuesQuery request, CancellationToken ctx)
+    {
+        var venues = await _repository.GetAllVenuesAsync(ctx);
+        var result = venues.ToList().Select(v => new VenueDTO(v.Id.Value, v.Name));
+        return Result<IEnumerable<VenueDTO>>.Success(result);
+    }
+}
+</file>
+
+<file path="GigBooking.Application/AssemblyReference.cs">
+namespace GigBooking.Application;
+
+public class AssemblyReference
+{
+
+}
+</file>
+
+<file path="GigBooking.Application/DependencyInjection.cs">
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Application;
+
+public static class DependencyInjection
+{
+
+    public static IServiceCollection AddApplication(this IServiceCollection services)
+    {
+
+        services.AddMediatR(cfg =>
+        {
+            cfg.RegisterServicesFromAssembly(typeof(AssemblyReference).Assembly);
+
+        } );
+
+        return services;
+    }
+
+}
+</file>
+
+<file path="GigBooking.Application/GigBooking.Application.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MediatR" Version="14.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GigBooking.Domain\GigBooking.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
+</file>
+
+<file path="GigBooking.Domain/Abstractions/IArtistRepository.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+namespace GigBooking.Domain.Abstractions;
+
+public interface IArtistRepository
+{
+    public Artist Add(Artist artist);
+    public Task<Artist?> GetByIdAsync(ArtistId id, CancellationToken ctx);
+    public Task<Artist?> GetByIdReadOnlyAsync(ArtistId id, CancellationToken ctx);
+
+    public Task<IEnumerable<Artist>> GetAllArtistsAsync(CancellationToken ctx);
+}
+</file>
+
+<file path="GigBooking.Domain/Abstractions/IGigRepository.cs">
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.Abstractions;
+
+public interface IGigRepository // pure Command repo with no join needs
+{
+    public Gig Add(Gig gig);
+    public Task<Gig?> GetByIdAsync(GigId id, CancellationToken ctx);
+    public Task<Gig?> GetByIdReadOnlyAsync(GigId id, CancellationToken ctx);
+}
+</file>
+
+<file path="GigBooking.Domain/Abstractions/IUnitOfWork.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.Abstractions;
+
+public interface IUnitOfWork
+{
+    Task<int> SaveChangesAsync(CancellationToken ctx);
+}
+</file>
+
+<file path="GigBooking.Domain/Abstractions/IVenueRepository.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+namespace GigBooking.Domain.Abstractions;
+
+public interface IVenueRepository
+{
+    public Venue Add(Venue venue);
+    public Task<Venue?> GetByIdAsync(VenueId id, CancellationToken ctx);
+    public Task<Venue?> GetByIdReadOnlyAsync(VenueId id, CancellationToken ctx);
+    public Task<IEnumerable<Venue>> GetAllVenuesAsync(CancellationToken ctx);
+}
+</file>
+
+<file path="GigBooking.Domain/Entities/Artist.cs">
+using GigBooking.Domain.Errors;
+using GigBooking.Domain.Primitives;
+using GigBooking.Domain.ValueObjects;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Xml;
+
+namespace GigBooking.Domain.Entities;
+
+public sealed class Artist : Entity<ArtistId>
+{
+    public string Name { get; private set; } = string.Empty;
+    private Artist(ArtistId id, string name ) : base(id)
+    {
+        Name = name;
+    } 
+
+    public static Result<Artist> Create(ArtistId id, string name)
+    {
+
+        if (string.IsNullOrEmpty(name))
+        {
+            return Result<Artist>.Failure(DomainErrors.Artist.NoName);
+        }
+        return Result<Artist>.Success(new Artist(id, name));
+    }
+}
+</file>
+
+<file path="GigBooking.Domain/Entities/Gig.cs">
+using GigBooking.Domain.Primitives;
+using GigBooking.Domain.ValueObjects;
+
+namespace GigBooking.Domain.Entities;
+
+public sealed class Gig : Entity<GigId>
+{
+    public ArtistId ArtistId { get; private set; }
+    public VenueId VenueId { get; private set; }
+    public DateTime ScheduledAt { get; private set; }
+
+    private Gig(GigId id, ArtistId artistId, VenueId venueId, DateTime scheduledAt)  : base(id)
+    {
+        this.ArtistId = artistId;
+        this.VenueId = venueId;
+        this.ScheduledAt = scheduledAt;
+    }
+    public static Result<Gig> Create(GigId id, ArtistId artistId, VenueId venueId, DateTime scheduledAt)
+    {
+        if (scheduledAt < DateTime.UtcNow)
+        {
+            return Result<Gig>.Failure(new Error("InvalidScheduledAt", "Scheduled date and time cannot be in the past."));
+        }
+        return Result<Gig>.Success(new Gig(id, artistId, venueId, scheduledAt));
+    }
+}
+</file>
+
+<file path="GigBooking.Domain/Entities/Venue.cs">
+using GigBooking.Domain.Primitives;
+using GigBooking.Domain.ValueObjects;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.Entities;
+
+public class Venue : Entity<VenueId>
+{
+    public string Name { get; private set; } = string.Empty;
+
+    private Venue(VenueId id, string name)  : base(id)
+    {
+        Name = name;
+    }
+    public static Result<Venue> Create(VenueId id, string name     )
+    {
+        if (string.IsNullOrEmpty(name))
+        {
+            return Result<Venue>.Failure(new Error("InvalidVenueName", "Venue name cannot be null or empty."));
+        }
+        return Result<Venue>.Success(new Venue(id, name));
+    }
+}
+</file>
+
+<file path="GigBooking.Domain/Errors/DomainErrors.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+using GigBooking.Domain.Primitives;
+
+namespace GigBooking.Domain.Errors;
+
+public static class DomainErrors
+{
+    public static class Artist
+    {
+        public static Error NoName => new Error("Artist.NoName", "The artist name cannot be empty or null.");
+        public static Error KeyNotFound => new Error("Artist.KeyNotFound", "The artist with the specified key was not found.");
+
+    }
+    public static class  Venue
+    {
+        public static Error NoName => new Error("Venue.NoName", "The venue name cannot be empty or null.");
+        public static Error KeyNotFound => new Error("Venue.KeyNotFound", "The venue with the specified key was not found.");
+
+
+    }
+    public static class Gig
+    {
+        public static Error CouldNotCreate => new Error("Gig.CouldNotCreate", "The new gig could not be created");
+        public static Error KeyNotFound => new Error("Gig.KeyNotFound", "The gig with the specified key was not found.");
+    }
+}
+</file>
+
+<file path="GigBooking.Domain/Primitives/Entity.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.Primitives;
+
+public abstract class Entity<TId> : IEquatable<Entity<TId>> where TId: notnull
+{
+    public TId Id { get; private init; }
+    
+    protected Entity(TId id) => Id = id;
+
+    //protected readonly List<IDomainEvent> _domainEvents = new();
+    //public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
+
+
+    public static bool operator ==(Entity<TId>? left, Entity<TId>? right)
+    {
+        if (left is null && right is null)
+        {
+            return true;
+        }
+        if (left is null || right is null)
+        {
+            return false;
+        }
+        return left.Equals(right);
+    }
+    public static bool operator !=(Entity<TId>? left, Entity<TId>? right)
+    {
+        return !(left == right);
+    }
+
+    // Generic version
+    public override bool Equals(object? obj)
+    {
+        return Equals(obj as Entity<TId>);
+    }
+    public  bool Equals(Entity<TId>? other)
+    {
+        if (other == null)
+        {
+            return false;
+        }
+        if (other.GetType() != GetType())
+        {
+            return false;
+        }
+        if (other is not Entity<TId> entity)
+        {
+            return false;
+        }
+       return EqualityComparer<TId>.Default.Equals(Id, other.Id);
+    }
+    public override int GetHashCode()
+    {
+        return Id?.GetHashCode() ?? 0;
+    }
+
+    //protected void RaiseDomainEvent(IDomainEvent domainEvent)
+    //{
+    //    _domainEvents.Add(domainEvent);
+    //}
+
+    //public void ClearDomainEvents()
+    //{
+    //    _domainEvents.Clear();
+    //}
+}
+</file>
+
+<file path="GigBooking.Domain/Primitives/Error.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.Primitives;
+
+public sealed record Error(string Code, string? Description = null);
+</file>
+
+<file path="GigBooking.Domain/Primitives/Result.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.Primitives;
+
+public class Result
+{
+    public bool IsSuccess { get;  }
+    public bool IsFailure => !IsSuccess;
+    public Error? Error { get; }
+
+
+    protected Result(bool isSuccess, Error? error)
+    {
+        if ((isSuccess && error is not null) || (!isSuccess && error is null))
+        {
+            throw new InvalidOperationException();
+        }   
+        IsSuccess = isSuccess;
+        Error = error;
+    }
+    public static Result Success() => new Result(true, null);
+    public static Result Failure(Error error) => new Result(false, error);
+}
+public class Result<T>: Result
+{
+    public T Value { get; }
+    protected internal Result(T value, bool isSuccess, Error? error) : base(isSuccess, error)
+    {
+        Value = value;
+    }
+    public static Result<T> Success(T value) => new(value, true, null);
+    public new static Result<T> Failure(Error error) => new(default!, false, error);
+}
+</file>
+
+<file path="GigBooking.Domain/ValueObjects/ArtistId.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.ValueObjects;
+
+public readonly record struct ArtistId(Guid Value);
+</file>
+
+<file path="GigBooking.Domain/ValueObjects/GigId.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.ValueObjects;
+
+public readonly record struct GigId(Guid Value);
+</file>
+
+<file path="GigBooking.Domain/ValueObjects/VenueId.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Domain.ValueObjects;
+
+public readonly record struct VenueId(Guid Value);
+</file>
+
+<file path="GigBooking.Domain/GigBooking.Domain.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Configurations/ArtistConfiguration.cs">
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Infrastructure.Persistence.Configurations;
+
+public sealed class ArtistConfiguration : IEntityTypeConfiguration<Artist>
+{
+    public void Configure(EntityTypeBuilder<Artist> builder)
+    {
+
+        builder.ToTable("Artists");
+        builder.HasKey(a => a.Id);
+        builder.Property(a => a.Id).HasConversion(id => id.Value, value => new ArtistId(value));
+        builder.Property(a => a.Name).IsRequired();
+
+
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Configurations/GigConfiguration.cs">
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Infrastructure.Persistence.Configurations;
+
+public sealed class GigConfiguration : IEntityTypeConfiguration<Gig>
+{
+    public void Configure(EntityTypeBuilder<Gig> builder)
+    {
+        builder.ToTable("Gigs");
+        builder.HasKey(g => g.Id);
+        builder.Property(g => g.Id).HasConversion(id => id.Value, value => new GigId(value));
+        builder.Property(g => g.ArtistId).HasConversion(id => id.Value, value => new ArtistId(value));
+        builder.Property(g => g.VenueId).HasConversion(id => id.Value, value => new VenueId(value));
+        builder.Property(g => g.ScheduledAt).IsRequired();
+
+        builder.HasOne<Artist>().WithMany().HasForeignKey(g => g.ArtistId);
+        builder.HasOne<Venue>().WithMany().HasForeignKey(g => g.VenueId);
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Configurations/VenueConfiguration.cs">
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Infrastructure.Persistence.Configurations;
+
+public sealed class VenueConfiguration : IEntityTypeConfiguration<Venue>
+{
+    public void Configure(EntityTypeBuilder<Venue> builder)
+    {
+
+        builder.ToTable("Venues");
+        builder.HasKey(v => v.Id);
+        builder.Property(v => v.Id).HasConversion(id => id.Value, value => new VenueId(value));
+        builder.Property(v => v.Name).IsRequired();
+
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Migrations/20260824092551_Initial-Create.cs">
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace GigBooking.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class InitialCreate : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "Gigs",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false, collation: "NOCASE"),
+                    ArtistId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    VenueId = table.Column<Guid>(type: "TEXT", nullable: false),
+                    ScheduledAt = table.Column<DateTime>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Gigs", x => x.Id);
+                });
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "Gigs");
+        }
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Migrations/20260824092551_Initial-Create.Designer.cs">
+// <auto-generated />
+using System;
+using GigBooking.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace GigBooking.Infrastructure.Migrations
+{
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260824092551_Initial-Create")]
+    partial class InitialCreate
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Gig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT")
+                        .UseCollation("NOCASE");
+
+                    b.Property<Guid>("ArtistId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ScheduledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("VenueId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Gigs", (string)null);
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Migrations/20260824095135_AddedArtistAndVenue.cs">
+using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace GigBooking.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddedArtistAndVenue : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.AlterColumn<Guid>(
+                name: "Id",
+                table: "Gigs",
+                type: "TEXT",
+                nullable: false,
+                oldClrType: typeof(Guid),
+                oldType: "TEXT",
+                oldCollation: "NOCASE");
+
+            migrationBuilder.CreateTable(
+                name: "Artists",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Artists", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Venues",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "TEXT", nullable: false),
+                    Name = table.Column<string>(type: "TEXT", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Venues", x => x.Id);
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Gigs_ArtistId",
+                table: "Gigs",
+                column: "ArtistId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Gigs_VenueId",
+                table: "Gigs",
+                column: "VenueId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Gigs_Artists_ArtistId",
+                table: "Gigs",
+                column: "ArtistId",
+                principalTable: "Artists",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Gigs_Venues_VenueId",
+                table: "Gigs",
+                column: "VenueId",
+                principalTable: "Venues",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Gigs_Artists_ArtistId",
+                table: "Gigs");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Gigs_Venues_VenueId",
+                table: "Gigs");
+
+            migrationBuilder.DropTable(
+                name: "Artists");
+
+            migrationBuilder.DropTable(
+                name: "Venues");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Gigs_ArtistId",
+                table: "Gigs");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Gigs_VenueId",
+                table: "Gigs");
+
+            migrationBuilder.AlterColumn<Guid>(
+                name: "Id",
+                table: "Gigs",
+                type: "TEXT",
+                nullable: false,
+                collation: "NOCASE",
+                oldClrType: typeof(Guid),
+                oldType: "TEXT");
+        }
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Migrations/20260824095135_AddedArtistAndVenue.Designer.cs">
+// <auto-generated />
+using System;
+using GigBooking.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace GigBooking.Infrastructure.Migrations
+{
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260824095135_AddedArtistAndVenue")]
+    partial class AddedArtistAndVenue
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Artist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Artists", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Gig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ArtistId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ScheduledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("VenueId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArtistId");
+
+                    b.HasIndex("VenueId");
+
+                    b.ToTable("Gigs", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Venue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Venues", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Gig", b =>
+                {
+                    b.HasOne("GigBooking.Domain.Entities.Artist", null)
+                        .WithMany()
+                        .HasForeignKey("ArtistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GigBooking.Domain.Entities.Venue", null)
+                        .WithMany()
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Migrations/20260827103828_ValueObject_Keys.cs">
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace GigBooking.Infrastructure.Migrations
+{
+    /// <inheritdoc />
+    public partial class ValueObject_Keys : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+
+        }
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Migrations/20260827103828_ValueObject_Keys.Designer.cs">
+// <auto-generated />
+using System;
+using GigBooking.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace GigBooking.Infrastructure.Migrations
+{
+    [DbContext(typeof(AppDbContext))]
+    [Migration("20260827103828_ValueObject_Keys")]
+    partial class ValueObject_Keys
+    {
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Artist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Artists", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Gig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ArtistId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ScheduledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("VenueId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArtistId");
+
+                    b.HasIndex("VenueId");
+
+                    b.ToTable("Gigs", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Venue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Venues", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Gig", b =>
+                {
+                    b.HasOne("GigBooking.Domain.Entities.Artist", null)
+                        .WithMany()
+                        .HasForeignKey("ArtistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GigBooking.Domain.Entities.Venue", null)
+                        .WithMany()
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Migrations/AppDbContextModelSnapshot.cs">
+// <auto-generated />
+using System;
+using GigBooking.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+
+#nullable disable
+
+namespace GigBooking.Infrastructure.Migrations
+{
+    [DbContext(typeof(AppDbContext))]
+    partial class AppDbContextModelSnapshot : ModelSnapshot
+    {
+        protected override void BuildModel(ModelBuilder modelBuilder)
+        {
+#pragma warning disable 612, 618
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.11");
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Artist", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Artists", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Gig", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("ArtistId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("ScheduledAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("VenueId")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ArtistId");
+
+                    b.HasIndex("VenueId");
+
+                    b.ToTable("Gigs", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Venue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Venues", (string)null);
+                });
+
+            modelBuilder.Entity("GigBooking.Domain.Entities.Gig", b =>
+                {
+                    b.HasOne("GigBooking.Domain.Entities.Artist", null)
+                        .WithMany()
+                        .HasForeignKey("ArtistId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("GigBooking.Domain.Entities.Venue", null)
+                        .WithMany()
+                        .HasForeignKey("VenueId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+#pragma warning restore 612, 618
+        }
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Repositories/ArtistRepository.cs">
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using Microsoft.EntityFrameworkCore;
+
+namespace GigBooking.Infrastructure.Persistence.Repositories;
+
+public class ArtistRepository : IArtistRepository
+{
+
+    private readonly AppDbContext _context;
+    public ArtistRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+    public async Task<IEnumerable<Artist>> GetAllArtistsAsync(CancellationToken ctx)
+    {
+       var artists = await _context.Set<Artist>().AsNoTracking().ToListAsync(ctx);
+       return artists;
+    }
+    public async Task<Artist?> GetByIdAsync(ArtistId id, CancellationToken ctx = default)
+    {
+        var artist = await _context.Set<Artist>().FirstOrDefaultAsync(a => a.Id == id, ctx);
+        if (artist == null)
+        {
+            return null;
+        }
+        return artist;
+    } 
+    
+    public async Task<Artist?> GetByIdReadOnlyAsync(ArtistId id, CancellationToken ctx = default)
+    {
+        var artist = await _context.Set<Artist>().AsNoTracking().FirstOrDefaultAsync(a => a.Id == id, ctx);
+
+        if (artist == null)
+        {
+            return null;
+        }
+
+        return artist;
+    }
+    public Artist Add(Artist artist)
+    {
+        _context.Set<Artist>().Add(artist);
+        return artist;
+    }
+
+
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Repositories/GigRepository.cs">
+using GigBooking.Application.Common.Interfaces;
+using GigBooking.Application.Gigs.DTOs;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using Microsoft.EntityFrameworkCore;
+using static Microsoft.EntityFrameworkCore.DbLoggerCategory;
+
+
+namespace GigBooking.Infrastructure.Persistence.Repositories;
+
+public class GigRepository : IGigRepository, IGigReadRepository
+{
+    private readonly AppDbContext _context;
+
+    public GigRepository(AppDbContext context) {
+        
+        _context = context;
+    }
+    public Gig Add(Gig gig)
+    {
+        _context.Set<Gig>().Add(gig);
+        return gig;
+    }
+
+    public async Task<Gig?> GetByIdAsync(GigId id, CancellationToken ctx)
+    {
+        var gig =  await _context.Set<Gig>().FirstOrDefaultAsync(g => g.Id == id, ctx);
+        if (gig == null)
+        {
+            return null;
+        }
+        return gig;
+    }
+    public async Task<Gig?> GetByIdReadOnlyAsync(GigId id, CancellationToken ctx)
+    {
+        var gig = await _context.Set<Gig>().AsNoTracking().FirstOrDefaultAsync(g => g.Id == id, ctx);
+        if (gig == null)
+        {
+            return null;
+        }
+        return gig;
+    }
+
+
+    public async Task<IEnumerable<GigDTO>> GetAllGigsWithDetailsAsync(CancellationToken cancellationToken = default)
+    {
+        var gigs = await _context.Set<Gig>()
+            .AsNoTracking()
+            .Select(gig => new GigDTO(
+                gig.Id.Value, gig.ArtistId.Value, gig.VenueId.Value, gig.ScheduledAt,
+                  _context.Set<Artist>().First(a => a.Id == gig.ArtistId).Name,
+                  _context.Set<Venue>().First(v => v.Id == gig.VenueId).Name
+
+                )
+            ).ToListAsync(cancellationToken);
+
+        return gigs;
+    }
+
+    public Task<GigDTO?> GetGigWithDetailsByIdAsync(GigId id, CancellationToken cancellationToken = default)
+    {
+        throw new NotImplementedException();
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/Repositories/VenueRepository.cs">
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using Microsoft.EntityFrameworkCore;
+
+namespace GigBooking.Infrastructure.Persistence.Repositories;
+
+public class VenueRepository : IVenueRepository
+{
+
+    private readonly AppDbContext _context;
+    public VenueRepository(AppDbContext context)
+    {
+        _context = context;
+    }
+
+    public async Task<IEnumerable<Venue>> GetAllVenuesAsync(CancellationToken ctx)
+    {
+        var venues = await _context.Set<Venue>().AsNoTracking().ToListAsync(ctx);
+        return venues;
+    }
+
+    public async Task<Venue?> GetByIdAsync(VenueId id, CancellationToken ctx = default)
+    {
+        var venue = await _context.Set<Venue>().FirstOrDefaultAsync(v => v.Id == id, ctx);
+        if (venue == null)
+        {
+            return null;
+        }
+        return venue;
+    } 
+    
+    public async Task<Venue?> GetByIdReadOnlyAsync(VenueId id, CancellationToken ctx = default)
+    {
+        var venue = await _context.Set<Venue>().AsNoTracking().FirstOrDefaultAsync(v => v.Id == id, ctx);
+
+        if (venue == null)
+        {
+            return null;
+        }
+
+        return venue;
+    }
+    public Venue Add(Venue venue)
+    {
+        _context.Set<Venue>().Add(venue);
+        return venue;
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Persistence/AppDbContext.cs">
+using GigBooking.Domain.Abstractions;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Infrastructure.Persistence;
+
+public class AppDbContext : DbContext, IUnitOfWork
+{
+
+    public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
+    {
+    }
+    //public async Task<int> SaveChangesAsync(CancellationToken ctx)
+    //{
+    //    return await base.SaveChangesAsync(ctx);
+    //}
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AssemblyReference).Assembly);
+
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/Services/GuidGenerator.cs">
+using GigBooking.Application.Common.Interfaces;
+namespace GigBooking.Infrastructure.Services
+{
+    public class GuidGenerator : IGuidGenerator
+    {
+        public Guid GenerateGuid()
+        {
+           return Guid.CreateVersion7();
+        }
+    }
+}
+</file>
+
+<file path="GigBooking.Infrastructure/AssemblyReference.cs">
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Infrastructure;
+
+public class AssemblyReference
+{
+}
+</file>
+
+<file path="GigBooking.Infrastructure/DependencyInjection.cs">
+using GigBooking.Application.Common.Interfaces;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Infrastructure.Persistence;
+using GigBooking.Infrastructure.Persistence.Repositories;
+using GigBooking.Infrastructure.Services;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace GigBooking.Infrastructure;
+
+public static class DependencyInjection
+{
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    {
+        services.AddSingleton<IGuidGenerator, GuidGenerator>();
+        services.AddScoped<IArtistRepository, ArtistRepository>();
+        services.AddScoped<IVenueRepository, VenueRepository>();
+
+        services.AddScoped<GigRepository>();
+        services.AddScoped<IGigRepository>(sp=>sp.GetRequiredService<GigRepository>());
+        services.AddScoped<IGigReadRepository>(sp => sp.GetRequiredService<GigRepository>());
+        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        services.AddDbContext<AppDbContext>(options =>
+        {
+            options.UseSqlite(connectionString);
+        });
+
+
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
+
+        return services;
+    }
+
+}
+</file>
+
+<file path="GigBooking.Infrastructure/GigBooking.Infrastructure.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.11" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GigBooking.Application\GigBooking.Application.csproj" />
+    <ProjectReference Include="..\GigBooking.Domain\GigBooking.Domain.csproj" />
+  </ItemGroup>
+
+</Project>
+</file>
+
+<file path="GigBooking.Presentation/Endpoints/Endpoints.cs">
+using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Routing;
+
+
+namespace GigBooking.Presentation.Endpoints;
+
+public static class Endpoints
+{
+
+    public static void MapEndpoints(this IEndpointRouteBuilder app)
+    {
+        app.MapGet("/", () => "Hello World!");
+    }
+}
+</file>
+
+<file path="GigBooking.Presentation/GigBooking.Presentation.csproj">
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http" Version="2.3.12" />
+    <PackageReference Include="Microsoft.AspNetCore.Routing" Version="2.3.12" />
+  </ItemGroup>
+
+</Project>
+</file>
+
+<file path="GigBooking.WebAPI/Endpoints/Endpoints.cs">
+using GigBooking.Application.Artists.Commands.CreateArtistCommand;
+using GigBooking.Application.Artists.Queries.GetArtist;
+using GigBooking.Application.Artists.Queries.GetArtists;
+using GigBooking.Application.Gigs.Commands;
+using GigBooking.Application.Gigs.DTOs;
+using GigBooking.Application.Gigs.Queries;
+using GigBooking.Application.Gigs.Queries.GetGig;
+using GigBooking.Application.Venues.Commands.CreateVenueCommand;
+using GigBooking.Application.Venues.Queries.GetVenue;
+using GigBooking.Application.Venues.Queries.GetVenues;
+using GigBooking.Domain.Entities;
+using MediatR;
+using Microsoft.AspNetCore.Http.HttpResults;
+
+namespace GigBooking.WebAPI.Endpoints;
+
+public static class Endpoints
+{
+
+    public static void MapEndpoints(this IEndpointRouteBuilder app)
+    {
+        var apiV1 = app.MapGroup("/api/v1");
+        MapArtistEndpoints(apiV1);
+        MapVenueEndpoints(apiV1);
+        MapGigEndpoints(apiV1);
+    }
+
+    private static void MapGigEndpoints(RouteGroupBuilder apiGroup)
+    {
+        var gigGroup = apiGroup.MapGroup("/gigs").WithTags("gigs");
+        gigGroup.MapGet("/", async (ISender sender, CancellationToken ctx) =>
+        {
+            var results = await sender.Send(new GetGigsQuery(), ctx);
+            return Results.Ok(results.Value);
+        });
+        gigGroup.MapGet("/{id:guid}", 
+            async (Guid id, ISender sender, CancellationToken ctx) =>
+        {
+
+            var result = await sender.Send(new GetGigQuery(id), ctx);
+            if (result.IsFailure)
+            {
+                return Results.NotFound(result.Error);
+            }
+            return Results.Ok(result.Value);
+
+        }).WithName("GetGigById");
+
+        gigGroup.MapPost("/", async (CreateGigCommand request, ISender sender, CancellationToken ctx)
+            =>
+        {
+            var result = await sender.Send(request, ctx);
+            if (result.IsFailure)
+            {
+                return Results.BadRequest(result.Error!);
+            }
+            GigCreatedDTO gig = result.Value;
+            return Results.CreatedAtRoute("GetGigById", new { id = gig.Id }, gig);
+        });
+    }
+
+    public static void MapArtistEndpoints(IEndpointRouteBuilder apiGroup)
+    {
+        var artistGroup = apiGroup.MapGroup("/artists").WithTags("artists");
+
+        artistGroup.MapGet("/", async (ISender sender, CancellationToken ctx) =>
+        {
+            var result = await sender.Send(new GetArtistsQuery(), ctx);
+            return Results.Ok(result.Value);
+        });
+
+
+        artistGroup.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ctx) =>
+        {
+            var result = await sender.Send(new GetArtistQuery(id), ctx);
+            if (result.IsFailure)
+            {
+                return Results.NotFound(result.Error);
+            }
+            return Results.Ok(result.Value);
+        }).WithName("GetArtistById");
+        artistGroup.MapPost("/", async (CreateArtistCommand request, ISender sender, CancellationToken ctx) =>
+        {
+            var result = await sender.Send(request, ctx);
+            if (result.IsFailure)
+            {
+                return Results.BadRequest(result.Error);
+            }
+            var artist = result.Value;
+            return Results.CreatedAtRoute("GetArtistById", new { id = artist.Id }, artist);
+        });
+
+    }
+    public static void MapVenueEndpoints(IEndpointRouteBuilder apiGroup)
+    {
+        var venueGroup =  apiGroup.MapGroup("/venues").WithTags("venues");
+        venueGroup.MapGet("/", async (ISender sender, CancellationToken ctx) => 
+        
+        {
+            var result = await sender.Send(new GetVenuesQuery(), ctx);
+            return Results.Ok(result.Value);
+        });
+
+
+        venueGroup.MapGet("/{id:guid}", async (Guid id, ISender sender, CancellationToken ctx) =>
+        {
+            var result = await sender.Send(new GetVenueQuery(id), ctx);
+            if (result.IsFailure)
+            {
+                return Results.NotFound(result.Error);
+            }
+            return Results.Ok(result.Value);
+        }).WithName("GetVenueById");
+
+
+        venueGroup.MapPost("/", async (CreateVenueCommand request, ISender sender, CancellationToken ctx) =>
+        {
+            var result = await sender.Send(request, ctx);
+            if (result.IsFailure)
+            {
+                return Results.BadRequest(result.Error);
+            }
+            var venue = result.Value;
+            return Results.CreatedAtRoute("GetVenueById", new { id = venue.Id }, venue);
+        });
+
+    }
+}
+</file>
+
+<file path="GigBooking.WebAPI/Properties/launchSettings.json">
+{
+  "$schema": "https://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "http": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "http://localhost:5241",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    },
+    "https": {
+      "commandName": "Project",
+      "dotnetRunMessages": true,
+      "launchBrowser": false,
+      "applicationUrl": "https://localhost:7021;http://localhost:5241",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      }
+    }
+  }
+}
+</file>
+
+<file path="GigBooking.WebAPI/appsettings.Development.json">
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  }
+}
+</file>
+
+<file path="GigBooking.WebAPI/appsettings.json">
+{
+  "Logging": {
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft.AspNetCore": "Warning"
+    }
+  },
+  "ConnectionStrings": {
+    "DefaultConnection": "Data Source=gigbooking.db"
+  },
+  "AllowedHosts": "*"
+}
+</file>
+
+<file path="GigBooking.WebAPI/GigBooking.WebAPI.csproj">
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.11">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerGen" Version="10.2.3" />
+    <PackageReference Include="Swashbuckle.AspNetCore.SwaggerUI" Version="10.2.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GigBooking.Application\GigBooking.Application.csproj" />
+    <ProjectReference Include="..\GigBooking.Infrastructure\GigBooking.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>
+</file>
+
+<file path="GigBooking.WebAPI/GigBooking.WebAPI.http">
+@GigBooking.WebAPI_HostAddress = http://localhost:5241
+
+GET {{GigBooking.WebAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
+</file>
+
+<file path="GigBooking.WebAPI/Program.cs">
+using GigBooking.Application;
+using GigBooking.Infrastructure;
+using GigBooking.WebAPI.Endpoints;
+
+
+var builder = WebApplication.CreateBuilder(args);
+
+// Add services to the container.
+builder.Services.AddApplication();
+builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen();
+var app = builder.Build();
+
+// Configure the HTTP request pipeline.
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseHttpsRedirection();
+app.MapEndpoints(); // Ext method i Endpoints folder
+
+app.Run();
+</file>
+
+<file path=".gitattributes">
+###############################################################################
+# Set default behavior to automatically normalize line endings.
+###############################################################################
+* text=auto
+
+###############################################################################
+# Set default behavior for command prompt diff.
+#
+# This is need for earlier builds of msysgit that does not have it on by
+# default for csharp files.
+# Note: This is only used by command line
+###############################################################################
+#*.cs     diff=csharp
+
+###############################################################################
+# Set the merge driver for project and solution files
+#
+# Merging from the command prompt will add diff markers to the files if there
+# are conflicts (Merging from VS is not affected by the settings below, in VS
+# the diff markers are never inserted). Diff markers may cause the following 
+# file extensions to fail to load in VS. An alternative would be to treat
+# these files as binary and thus will always conflict and require user
+# intervention with every merge. To do so, just uncomment the entries below
+###############################################################################
+#*.sln       merge=binary
+#*.csproj    merge=binary
+#*.vbproj    merge=binary
+#*.vcxproj   merge=binary
+#*.vcproj    merge=binary
+#*.dbproj    merge=binary
+#*.fsproj    merge=binary
+#*.lsproj    merge=binary
+#*.wixproj   merge=binary
+#*.modelproj merge=binary
+#*.sqlproj   merge=binary
+#*.wwaproj   merge=binary
+
+###############################################################################
+# behavior for image files
+#
+# image files are treated as binary by default.
+###############################################################################
+#*.jpg   binary
+#*.png   binary
+#*.gif   binary
+
+###############################################################################
+# diff behavior for common document formats
+# 
+# Convert binary document formats to text before diffing them. This feature
+# is only available from the command line. Turn it on by uncommenting the 
+# entries below.
+###############################################################################
+#*.doc   diff=astextplain
+#*.DOC   diff=astextplain
+#*.docx  diff=astextplain
+#*.DOCX  diff=astextplain
+#*.dot   diff=astextplain
+#*.DOT   diff=astextplain
+#*.pdf   diff=astextplain
+#*.PDF   diff=astextplain
+#*.rtf   diff=astextplain
+#*.RTF   diff=astextplain
+</file>
+
+<file path=".gitignore">
+## Ignore Visual Studio temporary files, build results, and
+## files generated by popular Visual Studio add-ons.
+##
+## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
+
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# User-specific files (MonoDevelop/Xamarin Studio)
+*.userprefs
+
+# Mono auto generated files
+mono_crash.*
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Oo]ut/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio 2015/2017 cache/options directory
+.vs/
+# Uncomment if you have tasks that create the project's static files in wwwroot
+#wwwroot/
+
+# Visual Studio 2017 auto generated files
+Generated\ Files/
+
+# MSTest test Results
+[Tt]est[Rr]esult*/
+[Bb]uild[Ll]og.*
+
+# NUnit
+*.VisualState.xml
+TestResult.xml
+nunit-*.xml
+
+# Build Results of an ATL Project
+[Dd]ebugPS/
+[Rr]eleasePS/
+dlldata.c
+
+# Benchmark Results
+BenchmarkDotNet.Artifacts/
+
+# .NET Core
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# StyleCop
+StyleCopReport.xml
+
+# Files built by Visual Studio
+*_i.c
+*_p.c
+*_h.h
+*.ilk
+*.meta
+*.obj
+*.iobj
+*.pch
+*.pdb
+*.ipdb
+*.pgc
+*.pgd
+*.rsp
+*.sbr
+*.tlb
+*.tli
+*.tlh
+*.tmp
+*.tmp_proj
+*_wpftmp.csproj
+*.log
+*.vspscc
+*.vssscc
+.builds
+*.pidb
+*.svclog
+*.scc
+
+# Chutzpah Test files
+_Chutzpah*
+
+# Visual C++ cache files
+ipch/
+*.aps
+*.ncb
+*.opendb
+*.opensdf
+*.sdf
+*.cachefile
+*.VC.db
+*.VC.VC.opendb
+
+# Visual Studio profiler
+*.psess
+*.vsp
+*.vspx
+*.sap
+
+# Visual Studio Trace Files
+*.e2e
+
+# TFS 2012 Local Workspace
+$tf/
+
+# Guidance Automation Toolkit
+*.gpState
+
+# ReSharper is a .NET coding add-in
+_ReSharper*/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+# TeamCity is a build add-in
+_TeamCity*
+
+# DotCover is a Code Coverage Tool
+*.dotCover
+
+# AxoCover is a Code Coverage Tool
+.axoCover/*
+!.axoCover/settings.json
+
+# Coverlet is a free, cross platform Code Coverage Tool
+coverage*.json
+coverage*.xml
+coverage*.info
+
+# Visual Studio code coverage results
+*.coverage
+*.coveragexml
+
+# NCrunch
+_NCrunch_*
+.*crunch*.local.xml
+nCrunchTemp_*
+
+# MightyMoose
+*.mm.*
+AutoTest.Net/
+
+# Web workbench (sass)
+.sass-cache/
+
+# Installshield output folder
+[Ee]xpress/
+
+# DocProject is a documentation generator add-in
+DocProject/buildhelp/
+DocProject/Help/*.HxT
+DocProject/Help/*.HxC
+DocProject/Help/*.hhc
+DocProject/Help/*.hhk
+DocProject/Help/*.hhp
+DocProject/Help/Html2
+DocProject/Help/html
+
+# Click-Once directory
+publish/
+
+# Publish Web Output
+*.[Pp]ublish.xml
+*.azurePubxml
+# Note: Comment the next line if you want to checkin your web deploy settings,
+# but database connection strings (with potential passwords) will be unencrypted
+*.pubxml
+*.publishproj
+
+# Microsoft Azure Web App publish settings. Comment the next line if you want to
+# checkin your Azure Web App publish settings, but sensitive information contained
+# in these scripts will be unencrypted
+PublishScripts/
+
+# NuGet Packages
+*.nupkg
+# NuGet Symbol Packages
+*.snupkg
+# The packages folder can be ignored because of Package Restore
+**/[Pp]ackages/*
+# except build/, which is used as an MSBuild target.
+!**/[Pp]ackages/build/
+# Uncomment if necessary however generally it will be regenerated when needed
+#!**/[Pp]ackages/repositories.config
+# NuGet v3's project.json files produces more ignorable files
+*.nuget.props
+*.nuget.targets
+
+# Microsoft Azure Build Output
+csx/
+*.build.csdef
+
+# Microsoft Azure Emulator
+ecf/
+rcf/
+
+# Windows Store app package directories and files
+AppPackages/
+BundleArtifacts/
+Package.StoreAssociation.xml
+_pkginfo.txt
+*.appx
+*.appxbundle
+*.appxupload
+
+# Visual Studio cache files
+# files ending in .cache can be ignored
+*.[Cc]ache
+# but keep track of directories ending in .cache
+!?*.[Cc]ache/
+
+# Others
+ClientBin/
+~$*
+*~
+*.dbmdl
+*.dbproj.schemaview
+*.jfm
+*.pfx
+*.publishsettings
+orleans.codegen.cs
+
+# Including strong name files can present a security risk
+# (https://github.com/github/gitignore/pull/2483#issue-259490424)
+#*.snk
+
+# Since there are multiple workflows, uncomment next line to ignore bower_components
+# (https://github.com/github/gitignore/pull/1529#issuecomment-104372622)
+#bower_components/
+
+# RIA/Silverlight projects
+Generated_Code/
+
+# Backup & report files from converting an old project file
+# to a newer Visual Studio version. Backup files are not needed,
+# because we have git ;-)
+_UpgradeReport_Files/
+Backup*/
+UpgradeLog*.XML
+UpgradeLog*.htm
+ServiceFabricBackup/
+*.rptproj.bak
+
+# SQL Server files
+*.mdf
+*.ldf
+*.ndf
+
+# Business Intelligence projects
+*.rdl.data
+*.bim.layout
+*.bim_*.settings
+*.rptproj.rsuser
+*- [Bb]ackup.rdl
+*- [Bb]ackup ([0-9]).rdl
+*- [Bb]ackup ([0-9][0-9]).rdl
+
+# Microsoft Fakes
+FakesAssemblies/
+
+# GhostDoc plugin setting file
+*.GhostDoc.xml
+
+# Node.js Tools for Visual Studio
+.ntvs_analysis.dat
+node_modules/
+
+# Visual Studio 6 build log
+*.plg
+
+# Visual Studio 6 workspace options file
+*.opt
+
+# Visual Studio 6 auto-generated workspace file (contains which files were open etc.)
+*.vbw
+
+# Visual Studio LightSwitch build output
+**/*.HTMLClient/GeneratedArtifacts
+**/*.DesktopClient/GeneratedArtifacts
+**/*.DesktopClient/ModelManifest.xml
+**/*.Server/GeneratedArtifacts
+**/*.Server/ModelManifest.xml
+_Pvt_Extensions
+
+# Paket dependency manager
+.paket/paket.exe
+paket-files/
+
+# FAKE - F# Make
+.fake/
+
+# CodeRush personal settings
+.cr/personal
+
+# Python Tools for Visual Studio (PTVS)
+__pycache__/
+*.pyc
+
+# Cake - Uncomment if you are using it
+# tools/**
+# !tools/packages.config
+
+# Tabs Studio
+*.tss
+
+# Telerik's JustMock configuration file
+*.jmconfig
+
+# BizTalk build output
+*.btp.cs
+*.btm.cs
+*.odx.cs
+*.xsd.cs
+
+# OpenCover UI analysis results
+OpenCover/
+
+# Azure Stream Analytics local run output
+ASALocalRun/
+
+# MSBuild Binary and Structured Log
+*.binlog
+
+# NVidia Nsight GPU debugger configuration file
+*.nvuser
+
+# MFractors (Xamarin productivity tool) working folder
+.mfractor/
+
+# Local History for Visual Studio
+.localhistory/
+
+# BeatPulse healthcheck temp database
+healthchecksdb
+
+# Backup folder for Package Reference Convert tool in Visual Studio 2017
+MigrationBackup/
+
+# Ionide (cross platform F# VS Code tools) working folder
+.ionide/
+
+# Fody - auto-generated XML schema
+FodyWeavers.xsd
+</file>
+
+<file path="GigBooking.slnx">
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="GigBooking.Application/GigBooking.Application.csproj" />
+    <Project Path="GigBooking.Domain/GigBooking.Domain.csproj" />
+    <Project Path="GigBooking.Infrastructure/GigBooking.Infrastructure.csproj" />
+    <Project Path="GigBooking.WebAPI/GigBooking.WebAPI.csproj" />
+  </Folder>
+</Solution>
+</file>
+
+</files>

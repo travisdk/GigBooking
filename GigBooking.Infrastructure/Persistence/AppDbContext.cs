@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace GigBooking.Infrastructure.Data;
+namespace GigBooking.Infrastructure.Persistence;
 
 public class AppDbContext : DbContext, IUnitOfWork
 {

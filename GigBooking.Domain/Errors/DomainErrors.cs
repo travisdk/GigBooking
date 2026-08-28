@@ -13,4 +13,16 @@ public static class DomainErrors
         public static Error KeyNotFound => new Error("Artist.KeyNotFound", "The artist with the specified key was not found.");
 
     }
+    public static class  Venue
+    {
+        public static Error NoName => new Error("Venue.NoName", "The venue name cannot be empty or null.");
+        public static Error KeyNotFound => new Error("Venue.KeyNotFound", "The venue with the specified key was not found.");
+
+
+    }
+    public static class Gig
+    {
+        public static Error CouldNotCreate => new Error("Gig.CouldNotCreate", "The new gig could not be created");
+        public static Error KeyNotFound => new Error("Gig.KeyNotFound", "The gig with the specified key was not found.");
+    }
 }

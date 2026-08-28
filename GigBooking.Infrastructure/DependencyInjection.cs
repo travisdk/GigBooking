@@ -1,7 +1,7 @@
 ﻿using GigBooking.Application.Common.Interfaces;
 using GigBooking.Domain.Abstractions;
-using GigBooking.Infrastructure.Data;
-using GigBooking.Infrastructure.Repositories;
+using GigBooking.Infrastructure.Persistence;
+using GigBooking.Infrastructure.Persistence.Repositories;
 using GigBooking.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -18,6 +18,11 @@ public static class DependencyInjection
     {
         services.AddSingleton<IGuidGenerator, GuidGenerator>();
         services.AddScoped<IArtistRepository, ArtistRepository>();
+        services.AddScoped<IVenueRepository, VenueRepository>();
+
+        services.AddScoped<GigRepository>();
+        services.AddScoped<IGigRepository>(sp=>sp.GetRequiredService<GigRepository>());
+        services.AddScoped<IGigReadRepository>(sp => sp.GetRequiredService<GigRepository>());
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<AppDbContext>(options =>
         {

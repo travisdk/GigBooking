@@ -1,5 +1,6 @@
 ﻿using GigBooking.Domain.Errors;
 using GigBooking.Domain.Primitives;
+using GigBooking.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,15 +8,15 @@ using System.Xml;
 
 namespace GigBooking.Domain.Entities;
 
-public class Artist : Entity
+public sealed class Artist : Entity<ArtistId>
 {
     public string Name { get; private set; } = string.Empty;
-    private Artist(Guid id, string name ) : base(id)
+    private Artist(ArtistId id, string name ) : base(id)
     {
         Name = name;
     } 
 
-    public static Result<Artist> Create(Guid id, string name)
+    public static Result<Artist> Create(ArtistId id, string name)
     {
 
         if (string.IsNullOrEmpty(name))

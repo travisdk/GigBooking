@@ -4,16 +4,17 @@ using System.Text;
 
 namespace GigBooking.Domain.Primitives;
 
-public abstract class Entity : IEquatable<Entity>
+public abstract class Entity<TId> : IEquatable<Entity<TId>> where TId: notnull
 {
-    protected Entity(Guid id) => Id = id;
+    public TId Id { get; private init; }
+    
+    protected Entity(TId id) => Id = id;
 
     //protected readonly List<IDomainEvent> _domainEvents = new();
     //public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
-    public Guid Id { get; private init; }
 
 
-    public static bool operator ==(Entity? left, Entity? right)
+    public static bool operator ==(Entity<TId>? left, Entity<TId>? right)
     {
         if (left is null && right is null)
         {
@@ -25,7 +26,7 @@ public abstract class Entity : IEquatable<Entity>
         }
         return left.Equals(right);
     }
-    public static bool operator !=(Entity? left, Entity? right)
+    public static bool operator !=(Entity<TId>? left, Entity<TId>? right)
     {
         return !(left == right);
     }
@@ -33,9 +34,9 @@ public abstract class Entity : IEquatable<Entity>
     // Generic version
     public override bool Equals(object? obj)
     {
-        return Equals(obj as Entity);
+        return Equals(obj as Entity<TId>);
     }
-    public  bool Equals(Entity? other)
+    public  bool Equals(Entity<TId>? other)
     {
         if (other == null)
         {
@@ -45,15 +46,15 @@ public abstract class Entity : IEquatable<Entity>
         {
             return false;
         }
-        if (other is not Entity entity)
+        if (other is not Entity<TId> entity)
         {
             return false;
         }
-       return entity.Id == Id;
+       return EqualityComparer<TId>.Default.Equals(Id, other.Id);
     }
     public override int GetHashCode()
     {
-        return Id.GetHashCode();
+        return Id?.GetHashCode() ?? 0;
     }
 
     //protected void RaiseDomainEvent(IDomainEvent domainEvent)

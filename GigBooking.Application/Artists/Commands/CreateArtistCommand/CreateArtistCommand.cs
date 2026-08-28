@@ -7,6 +7,7 @@ using GigBooking.Domain.Primitives;
 using GigBooking.Domain.Abstractions;
 using GigBooking.Application.Artists.DTOs;
 using GigBooking.Application.Common.Interfaces;
+using GigBooking.Domain.ValueObjects;
 namespace GigBooking.Application.Artists.Commands.CreateArtistCommand;
 
 public sealed record CreateArtistCommand(string Name) : IRequest<Result<ArtistDTO>>;
@@ -29,7 +30,7 @@ public  class CreateArtistCommandHandler : IRequestHandler<CreateArtistCommand, 
     public async Task<Result<ArtistDTO>> Handle(CreateArtistCommand request, CancellationToken cancellationToken)
     {
         var newGuid = _guidGenerator.GenerateGuid();
-        var artistResult = Artist.Create(newGuid, request.Name);
+        var artistResult = Artist.Create(new ArtistId(newGuid), request.Name);
         
         if (artistResult.IsFailure)
         {
@@ -41,7 +42,7 @@ public  class CreateArtistCommandHandler : IRequestHandler<CreateArtistCommand, 
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id, artist.Name)  );
+        return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name)  );
     }
 
 }
