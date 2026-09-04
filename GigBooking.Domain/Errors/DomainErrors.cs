@@ -24,5 +24,8 @@ public static class DomainErrors
     {
         public static Error CouldNotCreate => new Error("Gig.CouldNotCreate", "The new gig could not be created");
         public static Error KeyNotFound => new Error("Gig.KeyNotFound", "The gig with the specified key was not found.");
+        public static Error ArtistAlreadyBooked = new Error("Gig.ArtistAlreadyBooked", "The artist is already booked on the specific date");
+        public static Error VenueAlreadyBooked = new Error("Gig.VenueAlreadyBooked", "The venue is already booked on the specific date");
+        public static Error InvalidScheduledAtDate = new Error("Gig.InvalidScheduledAtDate", "Scheduled date and time cannot be in the past.");
     }
 }

@@ -1,0 +1,59 @@
+Summary
+  Generated on: 04-09-2026 - 15:51:02
+  Coverage date: 03-09-2026 - 17:23:01 - 04-09-2026 - 15:50:57
+  Parser: MultiReport (5x Cobertura)
+  Assemblies: 2
+  Classes: 35
+  Files: 25
+  Line coverage: 94.8%
+  Covered lines: 260
+  Uncovered lines: 14
+  Coverable lines: 274
+  Total lines: 725
+  Branch coverage: 91% (51 of 56)
+  Covered branches: 51
+  Total branches: 56
+  Method coverage: 97.4% (76 of 78)
+  Full method coverage: 94.8% (74 of 78)
+  Covered methods: 76
+  Fully covered methods: 74
+  Total methods: 78
+
+GigBooking.Application                                                                     94.3%
+  GigBooking.Application.Artists.Commands.CreateArtistCommand.CreateArtistCommand           100%
+  GigBooking.Application.Artists.Commands.CreateArtistCommand.CreateArtistCommandHandler    100%
+  GigBooking.Application.Artists.DTOs.ArtistDTO                                             100%
+  GigBooking.Application.Artists.Queries.GetArtist.GetArtistQuery                           100%
+  GigBooking.Application.Artists.Queries.GetArtist.GetArtistQueryHandler                    100%
+  GigBooking.Application.Artists.Queries.GetArtists.GetArtistsQuery                         100%
+  GigBooking.Application.Artists.Queries.GetArtists.GetArtistsQueryHandler                  100%
+  GigBooking.Application.DependencyInjection                                                  0%
+  GigBooking.Application.Gigs.Commands.CreateGigCommand                                     100%
+  GigBooking.Application.Gigs.Commands.CreateGigCommandHandler                              100%
+  GigBooking.Application.Gigs.DTOs.GigDetailsDTO                                            100%
+  GigBooking.Application.Gigs.DTOs.GigDTO                                                   100%
+  GigBooking.Application.Gigs.Queries.GetGig.GetGigQuery                                    100%
+  GigBooking.Application.Gigs.Queries.GetGig.GetGigQueryHandler                             100%
+  GigBooking.Application.Gigs.Queries.GetGigs.GetGigsQuery                                  100%
+  GigBooking.Application.Gigs.Queries.GetGigs.GetGigsQueryHandler                           100%
+  GigBooking.Application.Venues.Commands.CreateVenueCommand.CreateVenueCommand              100%
+  GigBooking.Application.Venues.Commands.CreateVenueCommand.CreateVenueCommandHandler       100%
+  GigBooking.Application.Venues.DTOs.VenueDTO                                               100%
+  GigBooking.Application.Venues.Queries.GetVenue.GetVenueQuery                              100%
+  GigBooking.Application.Venues.Queries.GetVenue.GetVenueQueryHandler                       100%
+  GigBooking.Application.Venues.Queries.GetVenues.GetVenuesQuery                            100%
+  GigBooking.Application.Venues.Queries.GetVenues.GetVenuesQueryHandler                     100%
+
+GigBooking.Domain                                                                          95.6%
+  GigBooking.Domain.Entities.Artist                                                         100%
+  GigBooking.Domain.Entities.Gig                                                            100%
+  GigBooking.Domain.Entities.Venue                                                          100%
+  GigBooking.Domain.Errors.DomainErrors                                                    88.8%
+  GigBooking.Domain.Primitives.Entity<T>                                                   93.7%
+  GigBooking.Domain.Primitives.Error                                                        100%
+  GigBooking.Domain.Primitives.Result                                                      84.6%
+  GigBooking.Domain.Primitives.Result<T>                                                    100%
+  GigBooking.Domain.Services.GigBookingService                                              100%
+  GigBooking.Domain.ValueObjects.ArtistId                                                   100%
+  GigBooking.Domain.ValueObjects.GigId                                                      100%
+  GigBooking.Domain.ValueObjects.VenueId                                                    100%

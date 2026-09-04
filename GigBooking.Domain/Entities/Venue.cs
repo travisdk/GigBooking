@@ -1,4 +1,5 @@
-﻿using GigBooking.Domain.Primitives;
+﻿using GigBooking.Domain.Errors;
+using GigBooking.Domain.Primitives;
 using GigBooking.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
@@ -16,9 +17,9 @@ public class Venue : Entity<VenueId>
     }
     public static Result<Venue> Create(VenueId id, string name     )
     {
-        if (string.IsNullOrEmpty(name))
+        if (string.IsNullOrWhiteSpace(name))
         {
-            return Result<Venue>.Failure(new Error("InvalidVenueName", "Venue name cannot be null or empty."));
+            return Result<Venue>.Failure(DomainErrors.Venue.NoName);
         }
         return Result<Venue>.Success(new Venue(id, name));
     }

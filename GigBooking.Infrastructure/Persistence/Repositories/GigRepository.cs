@@ -62,4 +62,13 @@ public class GigRepository : IGigRepository, IGigReadRepository
     {
         throw new NotImplementedException();
     }
+
+    public async Task<IEnumerable<Gig>> GetGigsByDateAsync(DateTimeOffset date, CancellationToken ctx)
+    {
+        var startOfDay = date.Date;
+        var endOfDay = date.AddDays(1);
+        return await _context.Set<Gig>().AsNoTracking().Where(g => g.ScheduledAt >= startOfDay
+          && g.ScheduledAt < endOfDay )
+            .ToListAsync(ctx);
+    }
 }

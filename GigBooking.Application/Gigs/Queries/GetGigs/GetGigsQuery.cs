@@ -9,7 +9,7 @@ using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
 
-namespace GigBooking.Application.Venues.Queries.GetVenues;
+namespace GigBooking.Application.Gigs.Queries.GetGigs;
 
 public sealed record GetGigsQuery() : IRequest<Result<IEnumerable<GigDetailsDTO>>>;
 public class GetGigsQueryHandler : IRequestHandler<GetGigsQuery, Result<IEnumerable<GigDetailsDTO>>>

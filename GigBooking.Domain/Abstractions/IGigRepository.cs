@@ -11,4 +11,5 @@ public interface IGigRepository // pure Command repo with no join needs
     public Gig Add(Gig gig);
     public Task<Gig?> GetByIdAsync(GigId id, CancellationToken ctx);
     public Task<Gig?> GetByIdReadOnlyAsync(GigId id, CancellationToken ctx);
+    public Task<IEnumerable<Gig>> GetGigsByDateAsync(DateTimeOffset date, CancellationToken ctx);
 }

@@ -4,14 +4,12 @@ using GigBooking.Application.Artists.Queries.GetArtist;
 using GigBooking.Application.Artists.Queries.GetArtists;
 using GigBooking.Application.Gigs.Commands;
 using GigBooking.Application.Gigs.DTOs;
-using GigBooking.Application.Gigs.Queries;
 using GigBooking.Application.Gigs.Queries.GetGig;
+using GigBooking.Application.Gigs.Queries.GetGigs;
 using GigBooking.Application.Venues.Commands.CreateVenueCommand;
 using GigBooking.Application.Venues.Queries.GetVenue;
 using GigBooking.Application.Venues.Queries.GetVenues;
-using GigBooking.Domain.Entities;
 using MediatR;
-using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace GigBooking.WebAPI.Endpoints;
 

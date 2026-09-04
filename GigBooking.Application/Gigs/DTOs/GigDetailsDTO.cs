@@ -8,7 +8,7 @@ public sealed record GigDetailsDTO(
     Guid Id,
     Guid ArtistId,
     Guid VenueId,
-    DateTime ScheduledAt,
+    DateTimeOffset ScheduledAt,
     string ArtistName,
     string VenueName
 );

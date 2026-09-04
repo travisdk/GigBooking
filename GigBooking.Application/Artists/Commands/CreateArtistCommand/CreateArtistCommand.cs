@@ -21,7 +21,6 @@ public  class CreateArtistCommandHandler : IRequestHandler<CreateArtistCommand, 
 
     public CreateArtistCommandHandler(IArtistRepository repository, IUnitOfWork unitOfWork, IGuidGenerator guidGenerator)
     {
-
         _repository = repository;
         _unitOfWork = unitOfWork;
         _guidGenerator = guidGenerator;

@@ -19,6 +19,7 @@ public static class DependencyInjection
         services.AddSingleton<IGuidGenerator, GuidGenerator>();
         services.AddScoped<IArtistRepository, ArtistRepository>();
         services.AddScoped<IVenueRepository, VenueRepository>();
+        services.AddSingleton<TimeProvider>(TimeProvider.System);
 
         services.AddScoped<GigRepository>();
         services.AddScoped<IGigRepository>(sp=>sp.GetRequiredService<GigRepository>());
@@ -26,7 +27,7 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<AppDbContext>(options =>
         {
-            options.UseSqlite(connectionString);
+            options.UseSqlServer(connectionString);
         });
 
 

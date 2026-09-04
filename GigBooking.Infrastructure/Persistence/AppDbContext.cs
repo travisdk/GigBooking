@@ -12,10 +12,7 @@ public class AppDbContext : DbContext, IUnitOfWork
     public AppDbContext(DbContextOptions<AppDbContext> options) : base(options)
     {
     }
-    //public async Task<int> SaveChangesAsync(CancellationToken ctx)
-    //{
-    //    return await base.SaveChangesAsync(ctx);
-    //}
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AssemblyReference).Assembly);

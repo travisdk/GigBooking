@@ -19,7 +19,7 @@ public sealed class Artist : Entity<ArtistId>
     public static Result<Artist> Create(ArtistId id, string name)
     {
 
-        if (string.IsNullOrEmpty(name))
+        if (string.IsNullOrWhiteSpace(name))
         {
             return Result<Artist>.Failure(DomainErrors.Artist.NoName);
         }

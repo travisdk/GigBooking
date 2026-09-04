@@ -9,10 +9,11 @@ using MediatR;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using GigBooking.Domain.Services;
 
 namespace GigBooking.Application.Gigs.Commands;
 
-public sealed record CreateGigCommand(Guid ArtistId, Guid VenueId, DateTime ScheduledAt) : IRequest<Result<GigDTO>>;
+public sealed record CreateGigCommand(Guid ArtistId, Guid VenueId, DateTimeOffset ScheduledAt) : IRequest<Result<GigDTO>>;
 
 public class CreateGigCommandHandler : IRequestHandler<CreateGigCommand, Result<GigDTO>>
 {
@@ -21,20 +22,24 @@ public class CreateGigCommandHandler : IRequestHandler<CreateGigCommand, Result<
     private readonly IVenueRepository _venueRepository;
     private readonly IGuidGenerator _guidGenerator;
     private readonly IUnitOfWork _unitOfWork;
+    private readonly IGigBookingService _gigBookingService;
+    private readonly TimeProvider _timeProvider;
 
     public CreateGigCommandHandler(IGigRepository repository, IArtistRepository artistRepository, 
-        IVenueRepository venueRepository, IUnitOfWork unitOfWork, IGuidGenerator guidGenerator)
+        IVenueRepository venueRepository, IGigBookingService gigBookingService, IUnitOfWork unitOfWork, IGuidGenerator guidGenerator,
+         TimeProvider timeProvider)
     {
         _repository = repository;
         _artistRepository = artistRepository;
         _venueRepository = venueRepository;
         _guidGenerator = guidGenerator;
         _unitOfWork = unitOfWork;
+        _gigBookingService = gigBookingService;
+        _timeProvider = timeProvider;
     }
     public async Task<Result<GigDTO>> Handle(CreateGigCommand request, CancellationToken cancellationToken)
     {
        
-        // DOMAIN LOGIC NEEDS TO BE IMPLEMENTED TO CHECK VALIDITIES LATER
         if (await _artistRepository.GetByIdReadOnlyAsync(new ArtistId(request.ArtistId),
               cancellationToken) == null)
         {
@@ -45,18 +50,27 @@ public class CreateGigCommandHandler : IRequestHandler<CreateGigCommand, Result<
         {
             return Result<GigDTO>.Failure(DomainErrors.Venue.KeyNotFound);
         }
-        var gigId = new GigId(_guidGenerator.GenerateGuid());
-        var gigResult = Gig.Create(gigId, new ArtistId(request.ArtistId), new VenueId(request.VenueId)
-              , request.ScheduledAt);
-        
 
+
+        var existingGigsOnDate = await _repository.GetGigsByDateAsync(request.ScheduledAt, cancellationToken);
+        var bookingAllowed = _gigBookingService.CanBook(new ArtistId(request.ArtistId), 
+              new VenueId(request.VenueId), existingGigsOnDate);
+        if (bookingAllowed.IsFailure)
+        {
+            return Result<GigDTO>.Failure(bookingAllowed.Error!);
+        }
+
+        var gigId = new GigId(_guidGenerator.GenerateGuid());
+        var gigResult = Gig.Create(gigId, new ArtistId(request.ArtistId), 
+               new VenueId(request.VenueId),
+               request.ScheduledAt, _timeProvider.GetUtcNow());
+               
         if (gigResult.IsFailure)
         {
             return Result<GigDTO>.Failure(gigResult.Error!);
         }
         var gig = gigResult.Value;
         _repository.Add(gig);
-      
         await _unitOfWork.SaveChangesAsync(cancellationToken);
         GigDTO gigDTO = new GigDTO(gig.Id.Value, gig.ArtistId.Value,
               gig.VenueId.Value, gig.ScheduledAt); 
