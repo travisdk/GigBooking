@@ -6,6 +6,7 @@ using GigBooking.Infrastructure.Persistence;
 using GigBooking.Infrastructure.Persistence.Repositories;
 using GigBooking.Infrastructure.Services;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -31,13 +32,17 @@ public class GigRepositoryTests : IAsyncLifetime
     {
          await _msSqlContainer.StartAsync();
         var services = new ServiceCollection();
-        services.AddDbContext<AppDbContext>(options => options.UseSqlServer(_msSqlContainer.GetConnectionString()));
-        services.AddScoped<IGuidGenerator, GuidGenerator>();
-        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<AppDbContext>());
-        services.AddScoped<IGigRepository, GigRepository>();
-        services.AddScoped<IArtistRepository, ArtistRepository>();
-        services.AddScoped<IVenueRepository, VenueRepository>();
-        services.AddSingleton<TimeProvider>(TimeProvider.System);
+
+        var inMemorySettings = new Dictionary<string, string?>
+            {
+                {"ConnectionStrings:DefaultConnection", _msSqlContainer.GetConnectionString()}
+            };
+
+        IConfiguration configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(inMemorySettings)
+            .Build();
+
+        services.AddInfrastructure(configuration); // Setup the services needed in the Gig integration test
 
         _serviceProvider = services.BuildServiceProvider();
 
