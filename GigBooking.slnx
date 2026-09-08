@@ -9,5 +9,6 @@
     <Project Path="GigBooking.Application.UnitTests/GigBooking.Application.UnitTests.csproj" Id="9b3b18f2-2011-48df-90d1-f96ec5480bd6" />
     <Project Path="GigBooking.Domain.UnitTests/GigBooking.Domain.UnitTests.csproj" Id="73894be6-c988-4057-b7bc-50f25e4c0fb9" />
     <Project Path="GigBooking.Infrastructure.IntegrationTests/GigBooking.Infrastructure.IntegrationTests.csproj" Id="4f5240b8-2e13-4c48-a27a-7115f3de9a3a" />
+    <Project Path="GigBooking.WebAPI.IntegrationTests/GigBooking.WebAPI.IntegrationTests.csproj" Id="c300de6c-c6d2-4d3d-a39a-706a1fc6c02b" />
   </Folder>
 </Solution>

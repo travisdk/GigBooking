@@ -26,3 +26,4 @@ app.MapEndpoints(); // Ext method i Endpoints folder
 
 app.Run();
 
+public partial class Program { }
