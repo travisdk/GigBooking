@@ -4,7 +4,7 @@ using System.Text;
 
 namespace GigBooking.Domain.Primitives;
 
-public class Result
+public class Result : IValidationResult<Result>
 {
     public bool IsSuccess { get;  }
     public bool IsFailure => !IsSuccess;
@@ -22,8 +22,10 @@ public class Result
     }
     public static Result Success() => new Result(true, null);
     public static Result Failure(Error error) => new Result(false, error);
+
+    public static Result WithError(Error error) => Failure(error);
 }
-public class Result<T>: Result
+public class Result<T>: Result, IValidationResult<Result<T>>
 {
     public T Value { get; }
     protected internal Result(T value, bool isSuccess, Error? error) : base(isSuccess, error)
@@ -32,4 +34,7 @@ public class Result<T>: Result
     }
     public static Result<T> Success(T value) => new(value, true, null);
     public new static Result<T> Failure(Error error) => new(default!, false, error);
+
+    public static new Result<T> WithError(Error error) => Failure(error);
+
 }

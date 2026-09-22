@@ -1,15 +1,15 @@
-﻿using GigBooking.Application.Common.Interfaces;
+﻿using MediatR;
+using FluentValidation;
+
+using GigBooking.Application.Common.Interfaces;
 using GigBooking.Application.Gigs.DTOs;
 using GigBooking.Domain.Abstractions;
-using GigBooking.Domain.Primitives;
 using GigBooking.Domain.Entities;
-using GigBooking.Domain.ValueObjects;
 using GigBooking.Domain.Errors;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using GigBooking.Domain.Primitives;
 using GigBooking.Domain.Services;
+using GigBooking.Domain.ValueObjects;
+using GigBooking.Application.Common.Errors;
 
 namespace GigBooking.Application.Gigs.Commands;
 
@@ -79,3 +79,25 @@ public class CreateGigCommandHandler : IRequestHandler<CreateGigCommand, Result<
     }
 }
 
+
+public class CreateGigCommandValidator : AbstractValidator<CreateGigCommand>
+{
+    public CreateGigCommandValidator(TimeProvider timeProvider)
+    {
+        // 1. Tjek at ArtistId ikke er tomt (Guid.Empty)
+        RuleFor(x => x.ArtistId)
+                .NotEmpty()
+                .WithErrorCode(ValidationErrors.Gig.EmptyArtistId.Code)
+                .WithMessage(ValidationErrors.Gig.EmptyArtistId.Description);
+
+        RuleFor(x => x.VenueId)
+            .NotEmpty()
+            .WithErrorCode(ValidationErrors.Gig.EmptyVenueId.Code)
+            .WithMessage(ValidationErrors.Gig.EmptyVenueId.Description);
+
+        RuleFor(x => x.ScheduledAt)
+            .GreaterThan(x => timeProvider.GetUtcNow())
+            .WithErrorCode(DomainErrors.Gig.InvalidScheduledAtDate.Code)
+            .WithMessage(DomainErrors.Gig.InvalidScheduledAtDate.Description);
+    }
+}

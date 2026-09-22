@@ -19,38 +19,10 @@ using System.Text;
 using Testcontainers.MsSql;
 namespace GigBooking.WebAPI.IntegrationTests.EndpointTests;
 
-public class VenueEndpointsTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public class VenueEndpointsTests : BaseEndpointTests
 {
-    private readonly HttpClient _client;
-    private readonly CustomWebApplicationFactory _factory;
-    public VenueEndpointsTests(CustomWebApplicationFactory factory)
+    public VenueEndpointsTests(CustomWebApplicationFactory factory) : base(factory) { }
 
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-    }
-
-
-    public async Task InitializeAsync()
-    {
-        await _factory.ResetDatabaseAsync();
-    }
-
-    public Task DisposeAsync()
-    {
-      return   Task.CompletedTask;
-    }
-
-    // HELPERS
-    private async Task AddVenuesAsync(params Venue[] venues)
-    {
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            dbContext.Set<Venue>().AddRange(venues); // sync
-            await dbContext.SaveChangesAsync();
-        }
-    }
 
     [Fact] 
     public async Task GetById_WhenVenueExists_ReturnsOkAndVenueDTO()
@@ -60,9 +32,9 @@ public class VenueEndpointsTests : IClassFixture<CustomWebApplicationFactory>, I
         var venue = Venue.Create(new VenueId(venueGuid), venueName).Value;
         await AddVenuesAsync(venue);
 
-        var response = await _client.GetAsync(ApiRoutes.Venues.GetById(venueGuid));
+        var response = await Client.GetAsync(ApiRoutes.Venues.GetById(venueGuid));
+        
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
         var result = await response.Content.ReadFromJsonAsync<VenueDTO>();
         Assert.NotNull(result);
         Assert.Equal(venueGuid, result.Id);
@@ -73,11 +45,11 @@ public class VenueEndpointsTests : IClassFixture<CustomWebApplicationFactory>, I
     public async Task GetById_WhenVenueIsNotFound_ReturnsNotFound()
     {
         var unknownVenueGuid = Guid.NewGuid();
-        var response = await _client.GetAsync(ApiRoutes.Venues.GetById(unknownVenueGuid));
+        
+        var response = await Client.GetAsync(ApiRoutes.Venues.GetById(unknownVenueGuid));
+
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-
         var result = await response.Content.ReadFromJsonAsync<Error>();
-
         Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Venue.KeyNotFound, result );
     }
     
@@ -90,12 +62,11 @@ public class VenueEndpointsTests : IClassFixture<CustomWebApplicationFactory>, I
         var venue2Guid = Guid.NewGuid();
         var venue2Name = "TestVenue 2";
         var venue2 = Venue.Create(new VenueId(venue2Guid), venue2Name).Value;
-
         await AddVenuesAsync(venue1, venue2);
 
-        var response = await _client.GetAsync(ApiRoutes.Venues.Prefix);
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var response = await Client.GetAsync(ApiRoutes.Venues.Prefix);
 
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<IEnumerable<VenueDTO>>();
         Assert.NotNull(result);
         Assert.Equal(2, result.Count());
@@ -109,16 +80,13 @@ public class VenueEndpointsTests : IClassFixture<CustomWebApplicationFactory>, I
     {
         var name = "TestVenue";
         var command = new CreateVenueCommand(name);
-        var response = await _client.PostAsJsonAsync(ApiRoutes.Venues.Prefix, command);
+        var response = await Client.PostAsJsonAsync(ApiRoutes.Venues.Prefix, command);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
-        
         var result = await response.Content.ReadFromJsonAsync<VenueDTO>();
-
         Assert.NotNull(result);
-
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var entityInDb = await dbContext.Set<Venue>().FindAsync(new VenueId(result.Id));
         Assert.NotNull(entityInDb);
@@ -131,19 +99,16 @@ public class VenueEndpointsTests : IClassFixture<CustomWebApplicationFactory>, I
     {
         var name = string.Empty;
         var command = new CreateVenueCommand(name);
-        var response = await _client.PostAsJsonAsync(ApiRoutes.Venues.Prefix, command);
+
+        var response = await Client.PostAsJsonAsync(ApiRoutes.Venues.Prefix, command);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
         var result = await response.Content.ReadFromJsonAsync<Error>();
-
         Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Venue.NoName, 
                result);
-
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var entitiesInDb = await dbContext.Set<Venue>().CountAsync();
-        
         Assert.Equal(0, entitiesInDb);
     }
 }

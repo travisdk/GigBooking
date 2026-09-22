@@ -17,38 +17,10 @@ using System.Text;
 using Testcontainers.MsSql;
 namespace GigBooking.WebAPI.IntegrationTests.EndpointTests;
 
-public class ArtistEndpointsTests : IClassFixture<CustomWebApplicationFactory>, IAsyncLifetime
+public class ArtistEndpointsTests :  BaseEndpointTests
 {
-    private readonly HttpClient _client;
-    private readonly CustomWebApplicationFactory _factory;
-    public ArtistEndpointsTests(CustomWebApplicationFactory factory)
 
-    {
-        _factory = factory;
-        _client = factory.CreateClient();
-    }
-
-
-    public async Task InitializeAsync()
-    {
-        await _factory.ResetDatabaseAsync();
-    }
-
-    public Task DisposeAsync()
-    {
-      return   Task.CompletedTask;
-    }
-
-    // HELPERS
-    private async Task AddArtistsAsync(params Artist[] artists)
-    {
-        using (var scope = _factory.Services.CreateScope())
-        {
-            var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-            dbContext.Set<Artist>().AddRange(artists); // sync
-            await dbContext.SaveChangesAsync();
-        }
-    }
+    public ArtistEndpointsTests(CustomWebApplicationFactory factory): base(factory) {}
 
     [Fact] 
     public async Task GetById_WhenArtistExists_ReturnsOkAndArtistDTO()
@@ -58,9 +30,9 @@ public class ArtistEndpointsTests : IClassFixture<CustomWebApplicationFactory>, 
         var artist = Artist.Create(new ArtistId(artistGuid), artistName).Value;
         await AddArtistsAsync(artist);
 
-        var response = await _client.GetAsync(ApiRoutes.Artists.GetById(artistGuid));
+        var response = await Client.GetAsync(ApiRoutes.Artists.GetById(artistGuid));
+      
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
         var result = await response.Content.ReadFromJsonAsync<ArtistDTO>();
         Assert.NotNull(result);
         Assert.Equal(artistGuid, result.Id);
@@ -71,11 +43,11 @@ public class ArtistEndpointsTests : IClassFixture<CustomWebApplicationFactory>, 
     public async Task GetById_WhenArtistIsNotFound_ReturnsNotFound()
     {
         var unknownArtistGuid = Guid.NewGuid();
-        var response = await _client.GetAsync(ApiRoutes.Artists.GetById(unknownArtistGuid));
+        
+        var response = await Client.GetAsync(ApiRoutes.Artists.GetById(unknownArtistGuid));
+        
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-
         var result = await response.Content.ReadFromJsonAsync<Error>();
-
         Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Artist.KeyNotFound, result );
     }
     
@@ -88,12 +60,11 @@ public class ArtistEndpointsTests : IClassFixture<CustomWebApplicationFactory>, 
         var artist2Guid = Guid.NewGuid();
         var artist2Name = "TestArtist 2";
         var artist2 = Artist.Create(new ArtistId(artist2Guid), artist2Name).Value;
-
         await AddArtistsAsync(artist1, artist2);
 
-        var response = await _client.GetAsync(ApiRoutes.Artists.Prefix);
+        var response = await Client.GetAsync(ApiRoutes.Artists.Prefix);
+        
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-
         var result = await response.Content.ReadFromJsonAsync<IEnumerable<ArtistDTO>>();
         Assert.NotNull(result);
         Assert.Equal(2, result.Count());
@@ -107,16 +78,14 @@ public class ArtistEndpointsTests : IClassFixture<CustomWebApplicationFactory>, 
     {
         var name = "TestArtist";
         var command = new CreateArtistCommand(name);
-        var response = await _client.PostAsJsonAsync(ApiRoutes.Artists.Prefix, command);
+        
+        var response = await Client.PostAsJsonAsync(ApiRoutes.Artists.Prefix, command);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.NotNull(response.Headers.Location);
-        
         var result = await response.Content.ReadFromJsonAsync<ArtistDTO>();
-
         Assert.NotNull(result);
-
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var entityInDb = await dbContext.Set<Artist>().FindAsync(new ArtistId(result.Id));
         Assert.NotNull(entityInDb);
@@ -129,16 +98,14 @@ public class ArtistEndpointsTests : IClassFixture<CustomWebApplicationFactory>, 
     {
         var name = string.Empty;
         var command = new CreateArtistCommand(name);
-        var response = await _client.PostAsJsonAsync(ApiRoutes.Artists.Prefix, command);
+        
+        var response = await Client.PostAsJsonAsync(ApiRoutes.Artists.Prefix, command);
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-
         var result = await response.Content.ReadFromJsonAsync<Error>();
-
         Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Artist.NoName, 
                result);
-
-        using var scope = _factory.Services.CreateScope();
+        using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var entitiesInDb = await dbContext.Set<Artist>().CountAsync();
         Assert.Equal(0, entitiesInDb);
