@@ -1,13 +1,16 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using MediatR;
+﻿using FluentValidation;
+using GigBooking.Application.Artists.Commands.CreateArtistCommand;
+using GigBooking.Application.Common.Interfaces;
+using GigBooking.Application.Venues.DTOs;
+using GigBooking.Domain;
+using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.Entities;
 using GigBooking.Domain.Primitives;
-using GigBooking.Domain.Abstractions;
-using GigBooking.Application.Venues.DTOs;
-using GigBooking.Application.Common.Interfaces;
 using GigBooking.Domain.ValueObjects;
+using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Text;
 namespace GigBooking.Application.Venues.Commands.CreateVenueCommand;
 
 public sealed record CreateVenueCommand(string Name) : IRequest<Result<VenueDTO>>;
@@ -46,4 +49,14 @@ public  class CreateVenueCommandHandler : IRequestHandler<CreateVenueCommand, Re
         return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name)  );
     }
 
+}
+public class CreateVenueCommandValidator : AbstractValidator<CreateVenueCommand>
+{
+    public CreateVenueCommandValidator()
+    {
+
+        RuleFor(x => x.Name).NotEmpty().WithErrorCode(Errors.Venue.NoName.Code).WithMessage((
+            Errors.Venue.NoName.Description));
+
+    }
 }

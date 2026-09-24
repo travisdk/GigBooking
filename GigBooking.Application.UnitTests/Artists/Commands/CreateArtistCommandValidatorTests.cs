@@ -5,11 +5,11 @@ using GigBooking.Domain;
 
 namespace GigBooking.Application.UnitTests.Artists.Commands;
 
-public class CreateArtistCommandValidatorTests
+public class CreateVenueCommandValidatorTests
 {
     private readonly CreateArtistCommandValidator _validator;
     
-    public CreateArtistCommandValidatorTests()
+    public CreateVenueCommandValidatorTests()
     {
         _validator = new CreateArtistCommandValidator();
     }
