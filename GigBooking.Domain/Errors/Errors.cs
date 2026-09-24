@@ -8,13 +8,14 @@ public static class Errors
     {
         public static Error NoName => new Error("Artist.NoName", "The artist name cannot be empty or null.");
         public static Error KeyNotFound => new Error("Artist.KeyNotFound", "The artist with the specified key was not found.");
+        public static readonly Error EmptyArtistId = new Error("Artist.EmptyArtistId", "Artist identifier cannot be empty");
 
     }
     public static class  Venue
     {
         public static Error NoName => new Error("Venue.NoName", "The venue name cannot be empty or null.");
         public static Error KeyNotFound => new Error("Venue.KeyNotFound", "The venue with the specified key was not found.");
-
+        public static readonly Error EmptyVenueId = new Error("Venue.EmptyVenueId", "Venue identifier cannot be empty");
 
     }
     public static class Gig
@@ -24,8 +25,10 @@ public static class Errors
         public static Error ArtistAlreadyBooked = new Error("Gig.ArtistAlreadyBooked", "The artist is already booked on the specific date");
         public static Error VenueAlreadyBooked = new Error("Gig.VenueAlreadyBooked", "The venue is already booked on the specific date");
         public static Error InvalidScheduledAtDate = new Error("Gig.InvalidScheduledAtDate", "Scheduled date and time cannot be in the past.");
-        public static readonly Error EmptyArtistId = new Error("Validation.Gig.EmptyArtistId", "Artist identifier cannot be empty");
+        public static readonly Error EmptyArtistId = new Error("Gig.EmptyArtistId", "Artist identifier cannot be empty");
         public static readonly Error EmptyVenueId =
-            new("Validation.Gig.EmptyVenueId", "Venue identifier cannot be empty.");
+            new("Gig.EmptyVenueId", "Venue identifier cannot be empty.");
+        public static readonly Error EmptyGigId =
+            new("Gig.EmptyGigId", "Gig identifier cannot be empty.");
     }
 }

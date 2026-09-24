@@ -4,6 +4,8 @@ using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.ValueObjects;
 using GigBooking.Application.Artists.DTOs;
 using GigBooking.Domain;
+using FluentValidation;
+using System.Data;
 
 namespace GigBooking.Application.Artists.Queries.GetArtist;
 
@@ -31,5 +33,13 @@ public class GetArtistQueryHandler : IRequestHandler<GetArtistQuery, Result<Arti
 
         return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name));
 
+    }
+
+    public class GetArtistQueryValidator : AbstractValidator<GetArtistQuery> {
+
+        public GetArtistQueryValidator()
+        {
+            RuleFor(x => x.Id).NotEmpty().WithErrorCode(Errors.Artist.EmptyArtistId.Code);
+        }
     }
 }

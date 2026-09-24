@@ -1,9 +1,11 @@
-﻿using MediatR;
-using GigBooking.Domain.Primitives;
-using GigBooking.Domain.Abstractions;
+﻿using FluentValidation;
+using GigBooking.Application.Artists.Queries.GetArtist;
 using GigBooking.Application.Venues.DTOs;
-using GigBooking.Domain.ValueObjects;
 using GigBooking.Domain;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Primitives;
+using GigBooking.Domain.ValueObjects;
+using MediatR;
 
 namespace GigBooking.Application.Venues.Queries.GetVenue;
 
@@ -33,3 +35,12 @@ public class GetVenueQueryHandler : IRequestHandler<GetVenueQuery, Result<VenueD
 
     }
 }
+public class GetVenueQueryValidator : AbstractValidator<GetVenueQuery>
+{
+
+    public GetVenueQueryValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty().WithErrorCode(Errors.Venue.EmptyVenueId.Code);
+    }
+}
+

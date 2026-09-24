@@ -3,6 +3,7 @@ using GigBooking.Application.Gigs.DTOs;
 using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.Primitives;
 using GigBooking.Domain;
+using FluentValidation;
 
 namespace GigBooking.Application.Gigs.Queries.GetGig;
 
@@ -26,4 +27,13 @@ public class GetGigQueryHandler : IRequestHandler<GetGigQuery, Result<GigDTO>>
         }
         return Result<GigDTO>.Success(new GigDTO(gig.Id.Value, gig.ArtistId.Value, gig.VenueId.Value, gig.ScheduledAt));
     }
+}
+
+public class GetGigQueryValidator : AbstractValidator<GetGigQuery>
+{
+    public GetGigQueryValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty().WithErrorCode(Errors.Gig.EmptyGigId.Code);
+    }
+
 }
