@@ -2,7 +2,7 @@
 using GigBooking.Application.Venues.Commands.CreateVenueCommand;
 using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.Entities;
-using GigBooking.Domain.Errors;
+using GigBooking.Domain;
 using NSubstitute;
 
 namespace GigBooking.Application.UnitTests.Venues.Commands;
@@ -52,7 +52,7 @@ public class CreateVenueCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Venue.NoName, result.Error);
+        Assert.Equal(Errors.Venue.NoName, result.Error);
         _venueRepositoryMock.DidNotReceive().Add(Arg.Any<Venue>());
         await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
 

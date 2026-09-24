@@ -2,7 +2,7 @@
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using GigBooking.Domain.Abstractions;
-using GigBooking.Domain.Errors;
+using GigBooking.Domain;
 using GigBooking.Domain.Entities;
 using GigBooking.Application.Venues.Queries.GetVenue;
 
@@ -46,7 +46,7 @@ public class GetVenueQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Venue.KeyNotFound, result.Error);
+        Assert.Equal(Errors.Venue.KeyNotFound, result.Error);
 
     }
 }

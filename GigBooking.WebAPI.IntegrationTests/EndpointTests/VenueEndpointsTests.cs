@@ -50,7 +50,7 @@ public class VenueEndpointsTests : BaseEndpointTests
 
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<Error>();
-        Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Venue.KeyNotFound, result );
+        Assert.Equal(GigBooking.Domain.Errors.Venue.KeyNotFound, result );
     }
     
     [Fact]
@@ -104,7 +104,7 @@ public class VenueEndpointsTests : BaseEndpointTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<Error>();
-        Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Venue.NoName, 
+        Assert.Equal(GigBooking.Domain.Errors.Venue.NoName, 
                result);
         using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

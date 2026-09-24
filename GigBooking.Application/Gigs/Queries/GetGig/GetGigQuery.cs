@@ -1,12 +1,8 @@
-﻿using GigBooking.Application.Common.Interfaces;
+﻿using MediatR;
 using GigBooking.Application.Gigs.DTOs;
 using GigBooking.Domain.Abstractions;
-using GigBooking.Domain.Errors;
 using GigBooking.Domain.Primitives;
-using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Text;
+using GigBooking.Domain;
 
 namespace GigBooking.Application.Gigs.Queries.GetGig;
 
@@ -26,7 +22,7 @@ public class GetGigQueryHandler : IRequestHandler<GetGigQuery, Result<GigDTO>>
         var gig = await _repository.GetByIdReadOnlyAsync(new Domain.ValueObjects.GigId(request.Id), ctx);
         if (gig == null)
         {
-            return Result<GigDTO>.Failure(DomainErrors.Gig.KeyNotFound);
+            return Result<GigDTO>.Failure(Errors.Gig.KeyNotFound);
         }
         return Result<GigDTO>.Success(new GigDTO(gig.Id.Value, gig.ArtistId.Value, gig.VenueId.Value, gig.ScheduledAt));
     }

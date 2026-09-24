@@ -1,14 +1,8 @@
 ﻿using GigBooking.Application.Artists.DTOs;
 using MediatR;
-using GigBooking.Domain.Entities;
 using GigBooking.Domain.Primitives;
 
-using System;
-using System.Collections.Generic;
-using System.Text;
 using GigBooking.Domain.Abstractions;
-using GigBooking.Domain.Errors;
-using GigBooking.Domain.ValueObjects;
 
 namespace GigBooking.Application.Artists.Queries.GetArtists;
 

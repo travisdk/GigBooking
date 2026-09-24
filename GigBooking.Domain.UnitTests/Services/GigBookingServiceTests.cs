@@ -1,5 +1,4 @@
 ﻿using GigBooking.Domain.Entities;
-using GigBooking.Domain.Errors;
 using GigBooking.Domain.Services;
 using GigBooking.Domain.ValueObjects;
 
@@ -42,7 +41,7 @@ public class GigBookingServiceTests
         var existingGigs = new List<Gig> { existingGig };
         var result = gigService.CanBook(artistId, new VenueId(Guid.NewGuid()), existingGigs);
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Gig.ArtistAlreadyBooked, result.Error);
+        Assert.Equal(Errors.Gig.ArtistAlreadyBooked, result.Error);
 
     }
 
@@ -58,6 +57,6 @@ public class GigBookingServiceTests
         var existingGigs = new List<Gig> { existingGig };
         var result = gigService.CanBook(new ArtistId(Guid.NewGuid()),venueId, existingGigs);
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Gig.VenueAlreadyBooked, result.Error);
+        Assert.Equal(Errors.Gig.VenueAlreadyBooked, result.Error);
     }
 }

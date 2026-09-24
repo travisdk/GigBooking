@@ -1,11 +1,12 @@
-﻿using GigBooking.Application.Artists.Queries.GetArtist;
-using GigBooking.Domain.ValueObjects;
+﻿
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
 using GigBooking.Domain.Abstractions;
-using GigBooking.Domain.Errors;
-using Microsoft.VisualBasic;
+using GigBooking.Domain;
 using GigBooking.Domain.Entities;
+using GigBooking.Application.Artists.Queries.GetArtist;
+using GigBooking.Domain.ValueObjects;
+
 
 namespace GigBooking.Application.UnitTests.Artists.Queries;
 public class GetArtistQueryHandlerTests
@@ -44,7 +45,7 @@ public class GetArtistQueryHandlerTests
         var result = await _sut.Handle(query, CancellationToken.None);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Artist.KeyNotFound, result.Error);
+        Assert.Equal(Errors.Artist.KeyNotFound, result.Error);
 
     }
 }

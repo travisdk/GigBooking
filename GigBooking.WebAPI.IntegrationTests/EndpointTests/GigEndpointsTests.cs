@@ -67,7 +67,7 @@ public class GigEndpointsTests : BaseEndpointTests
         
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var error = await response.Content.ReadFromJsonAsync<Error>();
-        Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Gig.KeyNotFound, error);
+        Assert.Equal(GigBooking.Domain.Errors.Gig.KeyNotFound, error);
        
     }
     [Fact]
@@ -140,7 +140,7 @@ public class GigEndpointsTests : BaseEndpointTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var error = await response.Content.ReadFromJsonAsync<Error>();
-        Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Artist.KeyNotFound, error);
+        Assert.Equal(GigBooking.Domain.Errors.Artist.KeyNotFound, error);
 
         var entities = await CountEntitiesAsync();
         Assert.Equal(0, entities);
@@ -159,7 +159,7 @@ public class GigEndpointsTests : BaseEndpointTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var error = await response.Content.ReadFromJsonAsync<Error>();
-        Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Venue.KeyNotFound, error);
+        Assert.Equal(GigBooking.Domain.Errors.Venue.KeyNotFound, error);
 
         var entities = await CountEntitiesAsync();
         Assert.Equal(0, entities);
@@ -180,7 +180,7 @@ public class GigEndpointsTests : BaseEndpointTests
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var error = await response.Content.ReadFromJsonAsync<Error>();
         Assert.NotNull(error);
-        Assert.Equal(Domain.Errors.DomainErrors.Gig.InvalidScheduledAtDate, error);
+        Assert.Equal(Domain.Errors.Gig.InvalidScheduledAtDate, error);
         var entities = await CountEntitiesAsync();
         Assert.Equal(0, entities);
 

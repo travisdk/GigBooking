@@ -5,11 +5,11 @@ using GigBooking.Application.Common.Interfaces;
 using GigBooking.Application.Gigs.DTOs;
 using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.Entities;
-using GigBooking.Domain.Errors;
+using GigBooking.Domain;
 using GigBooking.Domain.Primitives;
 using GigBooking.Domain.Services;
 using GigBooking.Domain.ValueObjects;
-using GigBooking.Application.Common.Errors;
+
 
 namespace GigBooking.Application.Gigs.Commands;
 
@@ -43,12 +43,12 @@ public class CreateGigCommandHandler : IRequestHandler<CreateGigCommand, Result<
         if (await _artistRepository.GetByIdReadOnlyAsync(new ArtistId(request.ArtistId),
               cancellationToken) == null)
         {
-            return Result<GigDTO>.Failure(DomainErrors.Artist.KeyNotFound);
+            return Result<GigDTO>.Failure(Errors.Artist.KeyNotFound);
         }
 
         if (await _venueRepository.GetByIdReadOnlyAsync(new VenueId(request.VenueId), cancellationToken) == null)
         {
-            return Result<GigDTO>.Failure(DomainErrors.Venue.KeyNotFound);
+            return Result<GigDTO>.Failure(Errors.Venue.KeyNotFound);
         }
 
 
@@ -87,17 +87,17 @@ public class CreateGigCommandValidator : AbstractValidator<CreateGigCommand>
         // 1. Tjek at ArtistId ikke er tomt (Guid.Empty)
         RuleFor(x => x.ArtistId)
                 .NotEmpty()
-                .WithErrorCode(ValidationErrors.Gig.EmptyArtistId.Code)
-                .WithMessage(ValidationErrors.Gig.EmptyArtistId.Description);
+                .WithErrorCode(Errors.Gig.EmptyArtistId.Code)
+                .WithMessage(Errors.Gig.EmptyArtistId.Description);
 
         RuleFor(x => x.VenueId)
             .NotEmpty()
-            .WithErrorCode(ValidationErrors.Gig.EmptyVenueId.Code)
-            .WithMessage(ValidationErrors.Gig.EmptyVenueId.Description);
+            .WithErrorCode(Errors.Gig.EmptyVenueId.Code)
+            .WithMessage(Errors.Gig.EmptyVenueId.Description);
 
         RuleFor(x => x.ScheduledAt)
             .GreaterThan(x => timeProvider.GetUtcNow())
-            .WithErrorCode(DomainErrors.Gig.InvalidScheduledAtDate.Code)
-            .WithMessage(DomainErrors.Gig.InvalidScheduledAtDate.Description);
+            .WithErrorCode(Errors.Gig.InvalidScheduledAtDate.Code)
+            .WithMessage(Errors.Gig.InvalidScheduledAtDate.Description);
     }
 }

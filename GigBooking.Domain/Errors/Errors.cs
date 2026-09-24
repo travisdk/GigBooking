@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using GigBooking.Domain.Primitives;
+﻿using GigBooking.Domain.Primitives;
 
-namespace GigBooking.Domain.Errors;
+namespace GigBooking.Domain;
 
-public static class DomainErrors
+public static class Errors
 {
     public static class Artist
     {
@@ -27,5 +24,8 @@ public static class DomainErrors
         public static Error ArtistAlreadyBooked = new Error("Gig.ArtistAlreadyBooked", "The artist is already booked on the specific date");
         public static Error VenueAlreadyBooked = new Error("Gig.VenueAlreadyBooked", "The venue is already booked on the specific date");
         public static Error InvalidScheduledAtDate = new Error("Gig.InvalidScheduledAtDate", "Scheduled date and time cannot be in the past.");
+        public static readonly Error EmptyArtistId = new Error("Validation.Gig.EmptyArtistId", "Artist identifier cannot be empty");
+        public static readonly Error EmptyVenueId =
+            new("Validation.Gig.EmptyVenueId", "Venue identifier cannot be empty.");
     }
 }

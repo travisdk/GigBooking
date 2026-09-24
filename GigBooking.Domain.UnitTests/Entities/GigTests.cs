@@ -1,5 +1,4 @@
 ﻿using GigBooking.Domain.Entities;
-using GigBooking.Domain.Errors;
 using GigBooking.Domain.ValueObjects;
 
 
@@ -21,7 +20,7 @@ public class GigTests
             invalidDateTime, utcNow);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Gig.InvalidScheduledAtDate, result.Error);
+        Assert.Equal(Errors.Gig.InvalidScheduledAtDate, result.Error);
 
     }
 

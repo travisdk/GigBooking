@@ -1,5 +1,5 @@
 ﻿using GigBooking.Domain.Entities;
-using GigBooking.Domain.Errors;
+using GigBooking.Domain;
 using GigBooking.Domain.Primitives;
 using GigBooking.Domain.ValueObjects;
 using System;
@@ -17,12 +17,12 @@ public class GigBookingService : IGigBookingService
 
             if (g.ArtistId == artistId )
             {
-                return Result.Failure(DomainErrors.Gig.ArtistAlreadyBooked);
+                return Result.Failure(Errors.Gig.ArtistAlreadyBooked);
 
             }
             if (g.VenueId == venueId)
             {
-                return Result.Failure(DomainErrors.Gig.VenueAlreadyBooked);
+                return Result.Failure(Errors.Gig.VenueAlreadyBooked);
             }
         }
         return Result.Success();

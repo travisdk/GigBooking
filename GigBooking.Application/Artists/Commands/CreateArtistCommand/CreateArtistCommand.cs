@@ -8,6 +8,7 @@ using GigBooking.Domain.Abstractions;
 using GigBooking.Application.Artists.DTOs;
 using GigBooking.Application.Common.Interfaces;
 using GigBooking.Domain.ValueObjects;
+using FluentValidation;
 namespace GigBooking.Application.Artists.Commands.CreateArtistCommand;
 
 public sealed record CreateArtistCommand(string Name) : IRequest<Result<ArtistDTO>>;
@@ -43,5 +44,17 @@ public  class CreateArtistCommandHandler : IRequestHandler<CreateArtistCommand, 
 
         return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name)  );
     }
+    
+}
+
+public class CreateArtistCommandValidator : AbstractValidator<CreateArtistCommand>
+{
+
+        public CreateArtistCommandValidator() {
+
+            RuleFor(x => x.Name).NotEmpty();
+
+    
+        }
 
 }

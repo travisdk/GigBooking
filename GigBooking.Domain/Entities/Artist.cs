@@ -1,5 +1,4 @@
-﻿using GigBooking.Domain.Errors;
-using GigBooking.Domain.Primitives;
+﻿using GigBooking.Domain.Primitives;
 using GigBooking.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
@@ -21,7 +20,7 @@ public sealed class Artist : Entity<ArtistId>
 
         if (string.IsNullOrWhiteSpace(name))
         {
-            return Result<Artist>.Failure(DomainErrors.Artist.NoName);
+            return Result<Artist>.Failure(Errors.Artist.NoName);
         }
         return Result<Artist>.Success(new Artist(id, name));
     }

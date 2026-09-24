@@ -6,12 +6,11 @@ using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.Services;
 using GigBooking.Application.Common.Interfaces;
 using Microsoft.Extensions.Time.Testing;
-using GigBooking.Application.Artists.Commands.CreateArtistCommand;
 using GigBooking.Domain.ValueObjects;
 using GigBooking.Domain.Entities;
 using GigBooking.Domain.Primitives;
-using GigBooking.Domain.Errors;
 using NSubstitute.ReturnsExtensions;
+using GigBooking.Domain;
 
 namespace GigBooking.Application.UnitTests.Gigs.Commands;
 
@@ -89,7 +88,7 @@ public class CreateGigCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Gig.InvalidScheduledAtDate, result.Error);
+        Assert.Equal(Errors.Gig.InvalidScheduledAtDate, result.Error);
          _gigRepositoryMock.DidNotReceive().Add(Arg.Any<Gig>());
          await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
 
@@ -106,7 +105,7 @@ public class CreateGigCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Artist.KeyNotFound, result.Error);
+        Assert.Equal(Errors.Artist.KeyNotFound, result.Error);
         _gigRepositoryMock.DidNotReceive().Add(Arg.Any<Gig>());
         await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
         
@@ -128,7 +127,7 @@ public class CreateGigCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Venue.KeyNotFound, result.Error);
+        Assert.Equal(Errors.Venue.KeyNotFound, result.Error);
         _gigRepositoryMock.DidNotReceive().Add(Arg.Any<Gig>());
         await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
 
@@ -154,7 +153,7 @@ public class CreateGigCommandHandlerTests
         _gigBookingServiceMock.CanBook(Arg.Is<ArtistId>(id => id.Value == artistGuid), Arg.Is<VenueId>(
               id => id.Value == venueGuid),
                 Arg.Any<IEnumerable<Gig>>()
-              ).Returns(Result.Failure(DomainErrors.Gig.ArtistAlreadyBooked));
+              ).Returns(Result.Failure(Errors.Gig.ArtistAlreadyBooked));
         // ArtistAlreadyBooked is the first possible error
 
         var command = new CreateGigCommand(artistGuid, venueGuid, _timeProviderMock.GetUtcNow().AddDays(7));
@@ -162,7 +161,7 @@ public class CreateGigCommandHandlerTests
         var result = await _sut.Handle(command, CancellationToken.None);
 
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Gig.ArtistAlreadyBooked, result.Error);
+        Assert.Equal(Errors.Gig.ArtistAlreadyBooked, result.Error);
 
         _gigRepositoryMock.DidNotReceive().Add(Arg.Any<Gig>());
         await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());

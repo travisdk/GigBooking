@@ -48,7 +48,7 @@ public class ArtistEndpointsTests :  BaseEndpointTests
         
         Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<Error>();
-        Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Artist.KeyNotFound, result );
+        Assert.Equal(GigBooking.Domain.Errors.Artist.KeyNotFound, result );
     }
     
     [Fact]
@@ -103,7 +103,7 @@ public class ArtistEndpointsTests :  BaseEndpointTests
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         var result = await response.Content.ReadFromJsonAsync<Error>();
-        Assert.Equal(GigBooking.Domain.Errors.DomainErrors.Artist.NoName, 
+        Assert.Equal(GigBooking.Domain.Errors.Artist.NoName, 
                result);
         using var scope = Factory.Services.CreateScope();
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();

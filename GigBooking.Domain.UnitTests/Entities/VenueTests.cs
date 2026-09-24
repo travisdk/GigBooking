@@ -1,5 +1,4 @@
 ﻿using GigBooking.Domain.Entities;
-using GigBooking.Domain.Errors;
 using GigBooking.Domain.ValueObjects;
 
 
@@ -28,7 +27,7 @@ public class VenueTests
         var venueId = new VenueId(Guid.NewGuid());
         var result = Venue.Create(venueId, name!);
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Venue.NoName, result.Error);
+        Assert.Equal(Errors.Venue.NoName, result.Error);
     }
 
 

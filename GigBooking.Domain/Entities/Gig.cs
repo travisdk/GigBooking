@@ -1,5 +1,4 @@
-﻿using GigBooking.Domain.Errors;
-using GigBooking.Domain.Primitives;
+﻿using GigBooking.Domain.Primitives;
 using GigBooking.Domain.ValueObjects;
 
 namespace GigBooking.Domain.Entities;
@@ -22,7 +21,7 @@ public sealed class Gig : Entity<GigId>
     {
         if (scheduledAt < utcNow)
         {
-            return Result<Gig>.Failure(DomainErrors.Gig.InvalidScheduledAtDate);
+            return Result<Gig>.Failure(Errors.Gig.InvalidScheduledAtDate);
         }
         return Result<Gig>.Success(new Gig(id, artistId, venueId, scheduledAt));
     }

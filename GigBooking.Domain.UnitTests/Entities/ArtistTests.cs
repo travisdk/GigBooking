@@ -1,5 +1,4 @@
 ﻿using GigBooking.Domain.Entities;
-using GigBooking.Domain.Errors;
 using GigBooking.Domain.ValueObjects;
 
 
@@ -27,7 +26,7 @@ public class ArtistTests
     {
         var result = Artist.Create(new ArtistId(Guid.NewGuid()), name!);
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Artist.NoName, result.Error);
+        Assert.Equal(Errors.Artist.NoName, result.Error);
     }
 
 }

@@ -1,9 +1,10 @@
-﻿using GigBooking.Application.Artists.Commands.CreateArtistCommand;
+﻿using NSubstitute;
+
+using GigBooking.Application.Artists.Commands.CreateArtistCommand;
 using GigBooking.Application.Common.Interfaces;
 using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.Entities;
-using GigBooking.Domain.Errors;
-using NSubstitute;
+using GigBooking.Domain;
 
 namespace GigBooking.Application.UnitTests.Artists.Commands;
 
@@ -52,7 +53,7 @@ public class CreateArtistCommandHandlerTests
 
         var result = await _sut.Handle(command, CancellationToken.None);
         Assert.True(result.IsFailure);
-        Assert.Equal(DomainErrors.Artist.NoName, result.Error);
+        Assert.Equal(Errors.Artist.NoName, result.Error);
 
         _artistRepositoryMock.DidNotReceive().Add(Arg.Any<Artist>());
         await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());

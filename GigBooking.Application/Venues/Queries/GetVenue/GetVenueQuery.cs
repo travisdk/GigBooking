@@ -1,15 +1,9 @@
-﻿using GigBooking.Application.Artists.DTOs;
-using MediatR;
-using GigBooking.Domain.Entities;
+﻿using MediatR;
 using GigBooking.Domain.Primitives;
-
-using System;
-using System.Collections.Generic;
-using System.Text;
 using GigBooking.Domain.Abstractions;
-using GigBooking.Domain.Errors;
 using GigBooking.Application.Venues.DTOs;
 using GigBooking.Domain.ValueObjects;
+using GigBooking.Domain;
 
 namespace GigBooking.Application.Venues.Queries.GetVenue;
 
@@ -32,7 +26,7 @@ public class GetVenueQueryHandler : IRequestHandler<GetVenueQuery, Result<VenueD
         var venue = await _repository.GetByIdReadOnlyAsync(new VenueId(request.Id), ctx);
         if (venue == null)
         {
-            return Result<VenueDTO>.Failure(DomainErrors.Venue.KeyNotFound);
+            return Result<VenueDTO>.Failure(Errors.Venue.KeyNotFound);
         }
 
         return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name));
