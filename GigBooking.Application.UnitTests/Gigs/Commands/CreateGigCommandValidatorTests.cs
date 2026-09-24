@@ -1,5 +1,6 @@
 ﻿using FluentValidation.TestHelper;
 using GigBooking.Application.Gigs.Commands;
+using GigBooking.Domain;
 using GigBooking.Domain.Primitives;
 using System;
 using System.Collections.Generic;
@@ -27,7 +28,8 @@ public class CreateGigCommandValidatorTests
         
         var result = _validator.TestValidate(command);
 
-        result.ShouldHaveValidationErrorFor(x => x.ScheduledAt);
+        result.ShouldHaveValidationErrorFor(x => x.ScheduledAt).WithErrorCode(
+            Errors.Gig.InvalidScheduledAtDate.Code);
 
     }
 
@@ -39,7 +41,8 @@ public class CreateGigCommandValidatorTests
 
         var result = _validator.TestValidate(command);
 
-        result.ShouldHaveValidationErrorFor(x => x.ArtistId);
+        result.ShouldHaveValidationErrorFor(x => x.ArtistId).
+            WithErrorCode(Errors.Gig.EmptyArtistId.Code);
 
     }
     [Fact]
@@ -50,7 +53,9 @@ public class CreateGigCommandValidatorTests
 
         var result = _validator.TestValidate(command);
 
-        result.ShouldHaveValidationErrorFor(x => x.VenueId);
+        result.ShouldHaveValidationErrorFor(x => x.VenueId).
+            WithErrorCode(Errors.Gig.EmptyVenueId.Code);
+        
 
     }
     [Fact]
