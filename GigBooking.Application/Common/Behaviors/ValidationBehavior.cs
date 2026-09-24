@@ -1,10 +1,7 @@
 ﻿using FluentValidation;
 using MediatR;
-using System;
-using System.Collections.Generic;
-using System.Text;
+
 using GigBooking.Domain.Primitives;
-using Xunit.Sdk;
 
 namespace GigBooking.Application.Common.Behaviors;
 

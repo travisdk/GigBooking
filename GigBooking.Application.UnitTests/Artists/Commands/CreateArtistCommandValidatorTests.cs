@@ -1,21 +1,25 @@
-﻿using GigBooking.Application.Gigs.Commands;
-using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using GigBooking.Application.Artists.Commands.CreateArtistCommand;
+using FluentValidation.TestHelper;
+using Xunit;
 
 namespace GigBooking.Application.UnitTests.Artists.Commands;
 
 public class CreateArtistCommandValidatorTests
 {
+    private readonly CreateArtistCommandValidator _validator;
+    
+    public CreateArtistCommandValidatorTests()
+    {
+        _validator = new CreateArtistCommandValidator();
+    }
 
-    //[Fact]
-    //public void Should_Have_Error_WhenArtistId_Is_Empty()
-    //{
-    //    var command = new CreateArtistCommand(Guid.Empty);
+    [Fact]
+    public void Should_Have_Error_WhenArtistName_IsNullOrEmpty()
+    {
+        var command = new CreateArtistCommand(string.Empty);
 
-    //    var result = _validator.TestValidate(command);
+        var result = _validator.TestValidate(command);
 
-    //    result.ShouldHaveValidationErrorFor(x => x.ArtistId);
-
-    //}
+        result.ShouldHaveValidationErrorFor(x => x.Name);
+    }
 }

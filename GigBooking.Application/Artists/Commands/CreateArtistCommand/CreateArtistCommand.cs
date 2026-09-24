@@ -8,6 +8,7 @@ using GigBooking.Domain.Abstractions;
 using GigBooking.Application.Artists.DTOs;
 using GigBooking.Application.Common.Interfaces;
 using GigBooking.Domain.ValueObjects;
+using GigBooking.Domain;
 using FluentValidation;
 namespace GigBooking.Application.Artists.Commands.CreateArtistCommand;
 
@@ -49,12 +50,10 @@ public  class CreateArtistCommandHandler : IRequestHandler<CreateArtistCommand, 
 
 public class CreateArtistCommandValidator : AbstractValidator<CreateArtistCommand>
 {
-
         public CreateArtistCommandValidator() {
 
-            RuleFor(x => x.Name).NotEmpty();
-
+            RuleFor(x => x.Name).NotEmpty().WithErrorCode(Errors.Artist.NoName.Code).WithMessage((
+                Errors.Artist.NoName.Description));
     
         }
-
 }
