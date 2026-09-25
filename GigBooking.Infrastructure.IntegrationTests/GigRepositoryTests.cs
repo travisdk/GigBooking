@@ -18,9 +18,7 @@ namespace GigBooking.Infrastructure.IntegrationTests;
 public class GigRepositoryTests : IAsyncLifetime
 {
 
-    private readonly MsSqlContainer _msSqlContainer = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
-        .Build();
-
+    private MsSqlContainer _msSqlContainer = null;
     private ServiceProvider _serviceProvider = null!;
 
     public async Task DisposeAsync()
@@ -30,7 +28,11 @@ public class GigRepositoryTests : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
-         await _msSqlContainer.StartAsync();
+        await DockerBootstrapper.EnsureDockerIsRunning();
+        _msSqlContainer = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest")
+        .Build();
+
+        await _msSqlContainer.StartAsync();
         var services = new ServiceCollection();
 
         var inMemorySettings = new Dictionary<string, string?>
