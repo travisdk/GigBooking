@@ -31,7 +31,7 @@ public class GetArtistQueryHandler : IRequestHandler<GetArtistQuery, Result<Arti
             return Result<ArtistDTO>.Failure(Errors.Artist.KeyNotFound);
         }
 
-        return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name));
+        return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name, artist.IsActive));
 
     }
 

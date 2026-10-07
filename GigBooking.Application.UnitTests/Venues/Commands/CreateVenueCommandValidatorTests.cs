@@ -20,8 +20,9 @@ public class CreateVenueCommandValidatorTests
     [InlineData(" ")]
     public void Should_Have_Error_WhenVenueName_IsNullOrEmpty(string? name)
     {
-        var command = new CreateVenueCommand(name!);
-        
+        var command = new CreateVenueCommand(name!, "TestStreet", "TestPostalCode", "TestCity", "DK");
+
+
         var result = _validator.TestValidate(command);
         
         result.ShouldHaveValidationErrorFor(x => x.Name)
@@ -32,7 +33,7 @@ public class CreateVenueCommandValidatorTests
     [Fact]
     public void Should_NotHave_Error_WhenCommand_IsValid()
     {
-        var command = new CreateVenueCommand("VenueName");
+        var command = new CreateVenueCommand("TestVenue", "TestStreet", "TestPostalCode", "TestCity", "DK");
 
         var result = _validator.TestValidate(command);
 

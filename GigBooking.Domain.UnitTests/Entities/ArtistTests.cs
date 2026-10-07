@@ -1,5 +1,8 @@
-﻿using GigBooking.Domain.Entities;
+﻿using GigBooking.Domain;
+using GigBooking.Domain.Entities;
 using GigBooking.Domain.ValueObjects;
+using System.Xml.Linq;
+
 
 
 namespace GigBooking.Domain.UnitTests.Entities;
@@ -29,4 +32,53 @@ public class ArtistTests
         Assert.Equal(Errors.Artist.NoName, result.Error);
     }
 
+
+    [Fact]
+    public void Deactivate_WhenAlreadyInactive_ReturnsFailure()
+    {
+        var artist = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist").Value;
+        var result = artist.DeActivate();
+        
+        result = artist.DeActivate();
+        
+        Assert.True(result.IsFailure);
+        Assert.Equal(Errors.Artist.AlreadyInactive, result.Error);
+        
+    }
+    [Fact] 
+    public void Deactivate_WhenActive_SetsIsActiveToFalseAndReturnsSuccess()
+    {
+        var artist = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist").Value;
+        
+        var result = artist.DeActivate();
+        
+        Assert.True(result.IsSuccess);
+        Assert.False(artist.IsActive);
+    }
+
+    [Fact]
+    public void ChangeName_NameIsApplied_ChangesNameAndReturnsSuccess()
+    {
+        var artist = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist").Value;
+
+        var result = artist.ChangeName("NewName");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("NewName", artist.Name);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("    ")]
+    public void ChangeName_NameMissing_ReturnsFailure(string? name)
+    {
+        var artist = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist").Value;
+
+        var result = artist.ChangeName(name!);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(Errors.Artist.NoName, result.Error);
+        Assert.Equal("TestArtist", artist.Name);
+    }
 }

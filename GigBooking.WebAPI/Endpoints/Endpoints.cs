@@ -1,4 +1,5 @@
 ﻿
+using GigBooking.Application.Artists.Commands;
 using GigBooking.Application.Artists.Commands.CreateArtistCommand;
 using GigBooking.Application.Artists.Queries.GetArtist;
 using GigBooking.Application.Artists.Queries.GetArtists;
@@ -9,12 +10,15 @@ using GigBooking.Application.Gigs.Queries.GetGigs;
 using GigBooking.Application.Venues.Commands.CreateVenueCommand;
 using GigBooking.Application.Venues.Queries.GetVenue;
 using GigBooking.Application.Venues.Queries.GetVenues;
+using GigBooking.Domain;
 using MediatR;
 
 namespace GigBooking.WebAPI.Endpoints;
 
 public static class Endpoints
 {
+    public sealed record UpdateArtistRequest(string Name); // helper
+     
 
     public static void MapEndpoints(this IEndpointRouteBuilder app)
     {
@@ -45,10 +49,10 @@ public static class Endpoints
 
         }).WithName("GetGigById");
 
-        gigGroup.MapPost("/", async (CreateGigCommand request, ISender sender, CancellationToken ctx)
+        gigGroup.MapPost("/", async (CreateGigCommand command, ISender sender, CancellationToken ctx)
             =>
         {
-            var result = await sender.Send(request, ctx);
+            var result = await sender.Send(command, ctx);
             if (result.IsFailure)
             {
                 return Results.BadRequest(result.Error!);
@@ -58,8 +62,11 @@ public static class Endpoints
         });
     }
 
+
+
     public static void MapArtistEndpoints(IEndpointRouteBuilder apiGroup)
     {
+
         var artistGroup = apiGroup.MapGroup("/artists").WithTags("artists");
 
         artistGroup.MapGet("/", async (ISender sender, CancellationToken ctx) =>
@@ -78,9 +85,9 @@ public static class Endpoints
             }
             return Results.Ok(result.Value);
         }).WithName("GetArtistById");
-        artistGroup.MapPost("/", async (CreateArtistCommand request, ISender sender, CancellationToken ctx) =>
+        artistGroup.MapPost("/", async (CreateArtistCommand command, ISender sender, CancellationToken ctx) =>
         {
-            var result = await sender.Send(request, ctx);
+            var result = await sender.Send(command, ctx);
             if (result.IsFailure)
             {
                 return Results.BadRequest(result.Error);
@@ -89,6 +96,34 @@ public static class Endpoints
             return Results.CreatedAtRoute("GetArtistById", new { id = artist.Id }, artist);
         });
 
+        artistGroup.MapPut("/{id:guid}", async (Guid id, UpdateArtistRequest request, ISender sender, CancellationToken ctx) =>
+        {
+
+           UpdateArtistCommand command = new UpdateArtistCommand(id, request.Name);
+
+            var result = await sender.Send(command, ctx);
+            if (result.IsFailure)
+            {
+                return result.Error == Errors.Artist.KeyNotFound ? Results.NotFound(result.Error) : Results.BadRequest(result.Error);
+            }
+            return Results.NoContent();
+        }).WithName("UpdateArtist");
+
+        artistGroup.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ctx)
+
+             =>
+        {
+            var command  = new DeleteArtistCommand(id);
+            var result = await sender.Send(command, ctx);
+
+            if (result.IsFailure)
+            {
+                return result.Error == Errors.Artist.KeyNotFound ? Results.NotFound(result.Error) :
+                   Results.BadRequest(result.Error);
+            }
+            return Results.NoContent();
+
+        }).WithName("DeleteArtist");
     }
     public static void MapVenueEndpoints(IEndpointRouteBuilder apiGroup)
     {
@@ -112,9 +147,9 @@ public static class Endpoints
         }).WithName("GetVenueById");
 
 
-        venueGroup.MapPost("/", async (CreateVenueCommand request, ISender sender, CancellationToken ctx) =>
+        venueGroup.MapPost("/", async (CreateVenueCommand command, ISender sender, CancellationToken ctx) =>
         {
-            var result = await sender.Send(request, ctx);
+            var result = await sender.Send(command, ctx);
             if (result.IsFailure)
             {
                 return Results.BadRequest(result.Error);

@@ -16,6 +16,7 @@ namespace GigBooking.Application.UnitTests.Gigs.Commands;
 
 public class CreateGigCommandHandlerTests
 {
+
     private readonly CreateGigCommandHandler _sut;
     private readonly IGigRepository _gigRepositoryMock;
     private readonly IArtistRepository _artistRepositoryMock;
@@ -50,7 +51,8 @@ public class CreateGigCommandHandlerTests
         var artist = Artist.Create(new ArtistId(artistGuid), "Artist").Value;
         _artistRepositoryMock.GetByIdReadOnlyAsync(Arg.Any<ArtistId>(), Arg.Any<CancellationToken>()).
             Returns(artist);
-        var venue = Venue.Create(new VenueId(venueGuid), "Venue").Value;
+        var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+        var venue = Venue.Create(new VenueId(venueGuid), "Venue", location).Value;
         _venueRepositoryMock.GetByIdReadOnlyAsync(Arg.Any<VenueId>(), Arg.Any<CancellationToken>()).
               Returns(venue);
         _gigBookingServiceMock.CanBook(artist.Id, venue.Id, Arg.Any<IEnumerable<Gig>>() )
@@ -76,7 +78,8 @@ public class CreateGigCommandHandlerTests
         var artist = Artist.Create(new ArtistId(artistGuid), "Artist").Value;
         _artistRepositoryMock.GetByIdReadOnlyAsync(Arg.Any<ArtistId>(), Arg.Any<CancellationToken>()).
             Returns(artist);
-        var venue = Venue.Create(new VenueId(venueGuid), "Venue").Value;
+        var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+        var venue = Venue.Create(new VenueId(venueGuid), "Venue", location).Value;
         _venueRepositoryMock.GetByIdReadOnlyAsync(Arg.Any<VenueId>(), Arg.Any<CancellationToken>()).
               Returns(venue);
         _gigBookingServiceMock.CanBook(artist.Id, venue.Id, Arg.Any<IEnumerable<Gig>>())
@@ -140,7 +143,9 @@ public class CreateGigCommandHandlerTests
         var venueGuid = Guid.NewGuid();
         var artist = Artist.Create(new ArtistId(artistGuid),
                   "TestArtist").Value;
-        var venue = Venue.Create(new VenueId(venueGuid), "TestVenue").Value;
+        var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+
+        var venue = Venue.Create(new VenueId(venueGuid), "TestVenue", location).Value;
 
         _artistRepositoryMock.GetByIdReadOnlyAsync(Arg.Is<ArtistId>(id => id.Value == artistGuid), Arg.Any<CancellationToken>())
             .Returns(artist

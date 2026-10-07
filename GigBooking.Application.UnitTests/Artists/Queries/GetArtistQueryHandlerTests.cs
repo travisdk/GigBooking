@@ -26,13 +26,16 @@ public class GetArtistQueryHandlerTests
         var rawId = Guid.NewGuid();
         var artistId = new ArtistId(rawId);
         var query = new GetArtistQuery(rawId);
-        var newArtist = Artist.Create(artistId, "TestArtist").Value;
-        _artistRepositoryMock.GetByIdReadOnlyAsync(new ArtistId(rawId), Arg.Any<CancellationToken>()).Returns(newArtist);
+        var artist = Artist.Create(artistId, "TestArtist").Value;
+        artist.DeActivate(); // to test inactive status is also considered here
+        _artistRepositoryMock.GetByIdReadOnlyAsync(new ArtistId(rawId), Arg.Any<CancellationToken>()).Returns(artist);
 
         var result = await _sut.Handle(query, CancellationToken.None);
+
         Assert.True(result.IsSuccess);
         Assert.Equal(rawId, result.Value.Id);
-        Assert.Equal(newArtist.Name, result.Value.Name);
+        Assert.Equal(artist.Name, result.Value.Name);
+        Assert.False(artist.IsActive);
     }
 
     [Fact]

@@ -23,7 +23,7 @@ public class GetArtistsQueryHandler : IRequestHandler<GetArtistsQuery, Result<IE
     {
 
         var artists = await _repository.GetAllArtistsAsync(ctx);
-        var result = artists.ToList().Select(artist => new ArtistDTO(artist.Id.Value, artist.Name));
+        var result = artists.ToList().Select(artist => new ArtistDTO(artist.Id.Value, artist.Name, artist.IsActive));
 
         return Result<IEnumerable<ArtistDTO>>.Success(result);
 

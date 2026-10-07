@@ -21,6 +21,9 @@ namespace GigBooking.WebAPI.IntegrationTests.EndpointTests;
 
 public class VenueEndpointsTests : BaseEndpointTests
 {
+    private static Location CreateValidLocation() => Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+    private static Location CreateValidLocation2() => Location.Create("TestStreet2", "TestPostalCode2", "TestCity2", "DK").Value;
+
     public VenueEndpointsTests(CustomWebApplicationFactory factory) : base(factory) { }
 
 
@@ -29,7 +32,9 @@ public class VenueEndpointsTests : BaseEndpointTests
     {
         var venueGuid = Guid.NewGuid();
         var venueName = "TestVenue";
-        var venue = Venue.Create(new VenueId(venueGuid), venueName).Value;
+        var location = CreateValidLocation();
+
+        var venue = Venue.Create(new VenueId(venueGuid), venueName, location).Value;
         await AddVenuesAsync(venue);
 
         var response = await Client.GetAsync(ApiRoutes.Venues.GetById(venueGuid));
@@ -58,10 +63,11 @@ public class VenueEndpointsTests : BaseEndpointTests
     {
         var venue1Guid = Guid.NewGuid();
         var venue1Name = "TestVenue 1";
-        var venue1 = Venue.Create(new VenueId(venue1Guid), venue1Name).Value;
+        
+        var venue1 = Venue.Create(new VenueId(venue1Guid), venue1Name, CreateValidLocation()).Value;
         var venue2Guid = Guid.NewGuid();
         var venue2Name = "TestVenue 2";
-        var venue2 = Venue.Create(new VenueId(venue2Guid), venue2Name).Value;
+        var venue2 = Venue.Create(new VenueId(venue2Guid), venue2Name, CreateValidLocation2()).Value;
         await AddVenuesAsync(venue1, venue2);
 
         var response = await Client.GetAsync(ApiRoutes.Venues.Prefix);
@@ -79,7 +85,7 @@ public class VenueEndpointsTests : BaseEndpointTests
     public async Task Create_WhenPayloadIsValid_ReturnsCreatedAndPersistsInDatabase()
     {
         var name = "TestVenue";
-        var command = new CreateVenueCommand(name);
+        var command = new CreateVenueCommand(name, "TestStreet", "TestPostalCode", "TestCity", "DK" );
         var response = await Client.PostAsJsonAsync(ApiRoutes.Venues.Prefix, command);
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
@@ -98,7 +104,7 @@ public class VenueEndpointsTests : BaseEndpointTests
     public async Task Create_WhenNameIsMissing_ReturnsBadRequestAndDoesNotPersist()
     {
         var name = string.Empty;
-        var command = new CreateVenueCommand(name);
+        var command = new CreateVenueCommand(name, "TestStreet", "TestPostalCode", "TestCity", "DK");
 
         var response = await Client.PostAsJsonAsync(ApiRoutes.Venues.Prefix, command);
 

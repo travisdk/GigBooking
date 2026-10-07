@@ -31,7 +31,9 @@ public class GetVenueQueryHandler : IRequestHandler<GetVenueQuery, Result<VenueD
             return Result<VenueDTO>.Failure(Errors.Venue.KeyNotFound);
         }
 
-        return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name));
+        LocationDTO locationDTO = LocationDTO.FromDomain(venue.Location);
+
+        return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name, locationDTO));
 
     }
 }

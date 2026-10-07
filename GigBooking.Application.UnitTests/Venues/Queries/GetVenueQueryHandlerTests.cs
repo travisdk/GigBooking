@@ -26,10 +26,12 @@ public class GetVenueQueryHandlerTests
         var rawId = Guid.NewGuid();
         var venueId = new VenueId(rawId);
         var query = new GetVenueQuery(rawId);
-        var newVenue = Venue.Create(venueId, "TestVenue").Value;
+        var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+        var newVenue = Venue.Create(venueId, "TestVenue", location).Value;
         _venueRepositoryMock.GetByIdReadOnlyAsync(new VenueId(rawId), Arg.Any<CancellationToken>()).Returns(newVenue);
 
         var result = await _sut.Handle(query, CancellationToken.None);
+
         Assert.True(result.IsSuccess);
         Assert.Equal(rawId, result.Value.Id);
         Assert.Equal(newVenue.Name, result.Value.Name);

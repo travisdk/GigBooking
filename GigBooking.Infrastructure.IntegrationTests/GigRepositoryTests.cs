@@ -18,7 +18,7 @@ namespace GigBooking.Infrastructure.IntegrationTests;
 public class GigRepositoryTests : IAsyncLifetime
 {
 
-    private MsSqlContainer _msSqlContainer = null;
+    private MsSqlContainer _msSqlContainer = null!;
     private ServiceProvider _serviceProvider = null!;
 
     public async Task DisposeAsync()
@@ -72,7 +72,8 @@ public class GigRepositoryTests : IAsyncLifetime
             var venueGuid = guidGenerator.GenerateGuid();
             venueId = new VenueId(venueGuid);
             var artist = Artist.Create(artistId, "TestArtist").Value;
-            var venue = Venue.Create(venueId, "TestVenue").Value;
+            var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+            var venue = Venue.Create(venueId, "TestVenue", location).Value;
             artistRepository.Add(artist);
             venueRepository.Add(venue);
             await unitOfWork.SaveChangesAsync(new CancellationToken());

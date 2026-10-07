@@ -20,8 +20,8 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>, IAsyn
 {
 
     private MsSqlContainer _msSqlContainer = new MsSqlBuilder("mcr.microsoft.com/mssql/server:2022-latest").Build();
-    private DbConnection _dbConnection = null;
-    private Respawner _respawner = null;
+    private DbConnection _dbConnection = null!;
+    private Respawner _respawner = null!;
 
     public async Task InitializeAsync()
     {

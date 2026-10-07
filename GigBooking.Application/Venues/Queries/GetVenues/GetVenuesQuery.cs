@@ -22,7 +22,10 @@ public class GetVenuesQueryHandler : IRequestHandler<GetVenuesQuery, Result<IEnu
     public async Task<Result<IEnumerable<VenueDTO>>> Handle(GetVenuesQuery request, CancellationToken ctx)
     {
         var venues = await _repository.GetAllVenuesAsync(ctx);
-        var result = venues.ToList().Select(v => new VenueDTO(v.Id.Value, v.Name));
-        return Result<IEnumerable<VenueDTO>>.Success(result);
+
+        var dtos = venues.Select(v => new VenueDTO(v.Id.Value, v.Name, 
+              LocationDTO.FromDomain(v.Location))).ToList();
+
+        return Result<IEnumerable<VenueDTO>>.Success(dtos);
     }
 }

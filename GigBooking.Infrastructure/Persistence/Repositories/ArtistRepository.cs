@@ -15,7 +15,7 @@ public class ArtistRepository : IArtistRepository
     }
     public async Task<IEnumerable<Artist>> GetAllArtistsAsync(CancellationToken ctx)
     {
-       var artists = await _context.Set<Artist>().AsNoTracking().ToListAsync(ctx);
+       var artists = await _context.Set<Artist>().Where(a => a.IsActive).AsNoTracking().ToListAsync(ctx);
        return artists;
     }
     public async Task<Artist?> GetByIdAsync(ArtistId id, CancellationToken ctx = default)

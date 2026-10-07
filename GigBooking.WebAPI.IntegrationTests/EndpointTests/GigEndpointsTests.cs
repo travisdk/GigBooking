@@ -17,6 +17,8 @@ namespace GigBooking.WebAPI.IntegrationTests.EndpointTests;
 
 public class GigEndpointsTests : BaseEndpointTests
 {
+
+
     private readonly TimeProvider _timeProvider;
     public GigEndpointsTests(CustomWebApplicationFactory factory) : base(factory) {
     
@@ -38,7 +40,8 @@ public class GigEndpointsTests : BaseEndpointTests
         var artistGuid = Guid.NewGuid();
         var artist = Artist.Create(new ArtistId(artistGuid), "TestArtist").Value;
         var venueGuid = Guid.NewGuid();
-        var venue = Venue.Create(new VenueId(venueGuid), "TestVenue").Value;
+        var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+        var venue = Venue.Create(new VenueId(venueGuid), "TestVenue", location).Value;
         await AddArtistsAsync(artist);
         await AddVenuesAsync(venue);
         var scheduledAt = _timeProvider.GetUtcNow().AddDays(7);
@@ -76,8 +79,11 @@ public class GigEndpointsTests : BaseEndpointTests
        
         var artist1 = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist1").Value;
         var artist2 = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist2").Value;
-        var venue1 = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue1").Value;
-        var venue2 = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue2").Value;
+        var location1 = Location.Create("TestStreet1", "TestPostalCode1", "TestCity1", "DK").Value;
+        var location2 = Location.Create("TestStreet2", "TestPostalCode2", "TestCity2", "DK").Value;
+
+        var venue1 = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue1", location1).Value;
+        var venue2 = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue2", location2).Value;
         await AddArtistsAsync(artist1, artist2);
         await AddVenuesAsync(venue1, venue2);
         var scheduledAt1 = _timeProvider.GetUtcNow().AddDays(7);
@@ -107,7 +113,8 @@ public class GigEndpointsTests : BaseEndpointTests
     public async Task Create_WhenPayloadIsValid_ReturnsCreatedAndPersistsToDatabase()
     {
         var artist = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist").Value;
-        var venue = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue").Value;
+        var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+        var venue = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue", location).Value;
         await AddArtistsAsync(artist);
         await AddVenuesAsync(venue);
         var scheduledAt = _timeProvider.GetUtcNow().AddDays(7);
@@ -131,7 +138,8 @@ public class GigEndpointsTests : BaseEndpointTests
     [Fact]
     public async Task Create_When_ArtistDoesNotExist_ReturnsBadRequestAndDoesNotPersist ()
     {
-        var venue = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue").Value;
+        var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+        var venue = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue", location).Value;
         await AddVenuesAsync(venue);
         var scheduledAt = _timeProvider.GetUtcNow().AddDays(7);
         var command = new CreateGigCommand(Guid.NewGuid(), venue.Id.Value, scheduledAt);
@@ -169,7 +177,8 @@ public class GigEndpointsTests : BaseEndpointTests
     public async Task Create_WhenInvalidScheduledAtDate_ReturnsBadRequestAndDoesNotPersist()
     {
         var artist = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist").Value;
-        var venue = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue").Value;
+        var location = Location.Create("TestStreet", "TestPostalCode", "TestCity", "DK").Value;
+        var venue = Venue.Create(new VenueId(Guid.NewGuid()), "TestVenue", location).Value;
         await AddArtistsAsync(artist);
         await AddVenuesAsync(venue);
         var scheduledAt = _timeProvider.GetUtcNow().AddDays(-1); // Past = invalid

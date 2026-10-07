@@ -43,7 +43,7 @@ public  class CreateArtistCommandHandler : IRequestHandler<CreateArtistCommand, 
 
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
-        return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name)  );
+        return Result<ArtistDTO>.Success(new ArtistDTO(artist.Id.Value, artist.Name, artist.IsActive)  );
     }
     
 }

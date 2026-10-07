@@ -1,0 +1,85 @@
+﻿using GigBooking.Application.Artists.Commands;
+using GigBooking.Application.Artists.Commands.CreateArtistCommand;
+using GigBooking.Domain;
+using GigBooking.Domain.Abstractions;
+using GigBooking.Domain.Entities;
+using GigBooking.Domain.ValueObjects;
+using NSubstitute;
+using NSubstitute.ReturnsExtensions;
+using System;
+using System.Collections.Generic;
+using System.Security.Cryptography.X509Certificates;
+using System.Text;
+
+
+namespace GigBooking.Application.UnitTests.Artists.Commands;
+
+public class UpdateArtistCommandHandlerTests
+{
+    private readonly IArtistRepository _repositoryMock;
+    private readonly IUnitOfWork _unitOfWorkMock;
+    private readonly UpdateArtistCommandHandler _sut;
+
+    public UpdateArtistCommandHandlerTests( ) { 
+    
+        
+        _repositoryMock = Substitute.For<IArtistRepository>();
+        _unitOfWorkMock = Substitute.For<IUnitOfWork>();
+        _sut = new UpdateArtistCommandHandler(_repositoryMock, _unitOfWorkMock);
+    }
+    [Fact]
+    public async Task Handle_WithName_ReturnsSuccess()
+    {
+        var guid = Guid.NewGuid();
+        var name = "ExistingName";
+        Artist existingArtist = Artist.Create(new ArtistId(guid), name).Value;
+        _repositoryMock.GetByIdAsync(Arg.Any<ArtistId>(), Arg.Any<CancellationToken>()).Returns(existingArtist);
+        var newName = "NewName";
+        var command = new UpdateArtistCommand(guid, newName);
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(newName, existingArtist.Name);
+        await _repositoryMock.Received(1).GetByIdAsync(Arg.Is<ArtistId>(a => a.Value == guid), Arg.Any<CancellationToken>());
+        await _unitOfWorkMock.Received(1).SaveChangesAsync(Arg.Any<CancellationToken>());
+
+    }
+
+    [Fact]
+    public async Task Handle_NameMissing_ReturnsFailure()
+    {
+        var guid = Guid.NewGuid();
+        var name = "ExistingName";
+        Artist existingArtist = Artist.Create(new ArtistId(guid), name).Value;
+        _repositoryMock.GetByIdAsync(Arg.Any<ArtistId>(), Arg.Any<CancellationToken>()).Returns(existingArtist);
+        var newName = ""; // not valid name
+        var command = new UpdateArtistCommand(guid, newName);
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(Errors.Artist.NoName, result.Error);
+        await _repositoryMock.Received(1).GetByIdAsync(Arg.Is<ArtistId>(a => a.Value == guid), Arg.Any<CancellationToken>());
+        await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+
+    }
+
+    [Fact]
+    public async Task Handle_ArtistIdNotFound_ReturnsFailure()
+    {
+        var guid = Guid.NewGuid();
+        var name = "ExistingName";
+        _repositoryMock.GetByIdAsync(Arg.Any<ArtistId>(), Arg.Any<CancellationToken>()).ReturnsNull();
+        var command = new UpdateArtistCommand(guid, name);
+
+        var result = await _sut.Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(Errors.Artist.KeyNotFound, result.Error);
+
+        await _repositoryMock.Received(1).GetByIdAsync(Arg.Is<ArtistId>(a => a.Value == guid), Arg.Any<CancellationToken>());
+        await _unitOfWorkMock.DidNotReceive().SaveChangesAsync(Arg.Any<CancellationToken>());
+
+    }
+}
