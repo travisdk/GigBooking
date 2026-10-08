@@ -4,4 +4,4 @@ using System.Text;
 
 namespace GigBooking.Application.Venues.DTOs;
 
-public sealed record VenueDTO(Guid Id, string Name, LocationDTO Location);   
+public sealed record VenueDTO(Guid Id, string Name, LocationDTO Location, bool IsActive);   

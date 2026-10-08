@@ -24,7 +24,7 @@ public class GetVenuesQueryHandler : IRequestHandler<GetVenuesQuery, Result<IEnu
         var venues = await _repository.GetAllVenuesAsync(ctx);
 
         var dtos = venues.Select(v => new VenueDTO(v.Id.Value, v.Name, 
-              LocationDTO.FromDomain(v.Location))).ToList();
+              LocationDTO.FromDomain(v.Location), v.IsActive)).ToList();
 
         return Result<IEnumerable<VenueDTO>>.Success(dtos);
     }

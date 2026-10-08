@@ -4,4 +4,4 @@ using System.Text;
 
 namespace GigBooking.Application.Artists.DTOs;
 
-public sealed record ArtistDTO(Guid Id, string Name, Boolean IsActive);   
+public sealed record ArtistDTO(Guid Id, string Name, bool IsActive);   

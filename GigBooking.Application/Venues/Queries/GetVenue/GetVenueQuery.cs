@@ -13,7 +13,6 @@ public sealed record GetVenueQuery(Guid Id) : IRequest<Result<VenueDTO>>;
 
 
 public class GetVenueQueryHandler : IRequestHandler<GetVenueQuery, Result<VenueDTO>>
-
 {
     private readonly IVenueRepository _repository;
 
@@ -33,7 +32,7 @@ public class GetVenueQueryHandler : IRequestHandler<GetVenueQuery, Result<VenueD
 
         LocationDTO locationDTO = LocationDTO.FromDomain(venue.Location);
 
-        return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name, locationDTO));
+        return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name, locationDTO, venue.IsActive));
 
     }
 }

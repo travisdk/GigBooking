@@ -4,7 +4,7 @@ using GigBooking.Domain.ValueObjects;
 using MediatR;
 using GigBooking.Domain;
 
-namespace GigBooking.Application.Artists.Commands;
+namespace GigBooking.Application.Artists.Commands.UpdateArtistCommand;
 
 public sealed record UpdateArtistCommand(Guid Id, string Name) : IRequest<Result>;
 

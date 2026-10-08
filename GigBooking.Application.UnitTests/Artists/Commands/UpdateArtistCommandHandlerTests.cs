@@ -1,26 +1,22 @@
 ﻿using GigBooking.Application.Artists.Commands;
 using GigBooking.Application.Artists.Commands.CreateArtistCommand;
+using GigBooking.Application.Artists.Commands.UpdateArtistCommand;
 using GigBooking.Domain;
 using GigBooking.Domain.Abstractions;
 using GigBooking.Domain.Entities;
 using GigBooking.Domain.ValueObjects;
 using NSubstitute;
 using NSubstitute.ReturnsExtensions;
-using System;
-using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-
 
 namespace GigBooking.Application.UnitTests.Artists.Commands;
 
-public class UpdateArtistCommandHandlerTests
+public class UpdateVenueCommandHandlerTests
 {
     private readonly IArtistRepository _repositoryMock;
     private readonly IUnitOfWork _unitOfWorkMock;
     private readonly UpdateArtistCommandHandler _sut;
 
-    public UpdateArtistCommandHandlerTests( ) { 
+    public UpdateVenueCommandHandlerTests( ) { 
     
         
         _repositoryMock = Substitute.For<IArtistRepository>();

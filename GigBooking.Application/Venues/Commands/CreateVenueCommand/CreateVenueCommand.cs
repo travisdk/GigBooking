@@ -61,7 +61,7 @@ public  class CreateVenueCommandHandler : IRequestHandler<CreateVenueCommand, Re
              venue.Location.Street, venue.Location.PostalCode, venue.Location.City, venue.Location.CountryCode
         );
 
-        return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name, locationDTO)  );
+        return Result<VenueDTO>.Success(new VenueDTO(venue.Id.Value, venue.Name, locationDTO, venue.IsActive)  );
     }
 
 }

@@ -1,6 +1,7 @@
 ﻿using GigBooking.Application.Artists.Commands;
 using GigBooking.Application.Artists.Commands.CreateArtistCommand;
 using GigBooking.Application.Artists.DTOs;
+using GigBooking.Domain;
 using GigBooking.Domain.Entities;
 
 using GigBooking.Domain.Primitives;
@@ -113,7 +114,7 @@ public class ArtistEndpointsTests :  BaseEndpointTests
         Assert.Equal(0, entitiesInDb);
     }
     [Fact] 
-    public async Task ChangeName_NameIsMissing_ReturnsBadRequestAndDoesNotPersist()
+    public async Task Update_NameIsMissing_ReturnsBadRequestAndDoesNotPersist()
     {
         var artist1Guid = Guid.NewGuid();
         var artist1Name = "TestArtist";
@@ -137,7 +138,7 @@ public class ArtistEndpointsTests :  BaseEndpointTests
     }
 
     [Fact]
-    public async Task ChangeName_WhenNameIsValid_ReturnsNoContentAndPersistsToDatabase()
+    public async Task Update_WhenNameIsValid_ReturnsNoContentAndPersistsToDatabase()
     {
         var artist1Guid = Guid.NewGuid();
         var artist1Name = "TestArtist";
@@ -156,6 +157,32 @@ public class ArtistEndpointsTests :  BaseEndpointTests
         Assert.NotNull(entityInDb);
         Assert.Equal(newName, entityInDb.Name);
     }
+
+    [Fact]
+    public async Task Update_WhenArtistIsNotFound_ReturnsFailureAndDoesNotPersist()
+    {
+        var artistGuid = Guid.NewGuid();
+        var artistName = "TestArtist";
+        var artist = Artist.Create(new ArtistId(artistGuid), artistName).Value;
+        await AddArtistsAsync(artist);
+        var newName = "NewName";
+        var request = new UpdateArtistRequest(newName);
+        var wrongGuid = Guid.NewGuid();
+
+        var response = await Client.PutAsJsonAsync($"{ApiRoutes.Artists.Prefix}/{wrongGuid}", request);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<Error>();
+        Assert.Equal(Errors.Artist.KeyNotFound, error);
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entityInDb = await dbContext.Set<Artist>().AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == artist.Id);
+        Assert.NotNull(entityInDb);
+        Assert.Equal(artistName, entityInDb.Name);
+
+    }
+
     [Fact]
     public async Task Delete_WhenArtistIsActive_ReturnsNoContentAndPersistsToDatabase()
     {
@@ -196,4 +223,27 @@ public class ArtistEndpointsTests :  BaseEndpointTests
         Assert.NotNull(entityInDb); // still there
         Assert.False(entityInDb.IsActive);
     }
+
+
+    [Fact]
+    public async Task Delete_WhenArtistIsNotFound_ReturnsNotFound()
+    {
+        var artist1Guid = Guid.NewGuid();
+        var artist1Name = "TestArtist";
+        var artist1 = Artist.Create(new ArtistId(artist1Guid), artist1Name).Value;
+        await AddArtistsAsync(artist1);
+        var wrongGuid = Guid.NewGuid();
+        var response = await Client.DeleteAsync($"{ApiRoutes.Artists.Prefix}/{wrongGuid}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<Error>();
+        Assert.NotNull(result);
+        Assert.Equal(Domain.Errors.Artist.KeyNotFound, result);
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entityInDb = await dbContext.Set<Artist>().AsNoTracking()
+            .FirstOrDefaultAsync(artist => artist.Id == artist1.Id);
+        Assert.NotNull(entityInDb); // still there
+    }
+
 }

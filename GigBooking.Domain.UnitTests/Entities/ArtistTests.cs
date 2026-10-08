@@ -37,9 +37,9 @@ public class ArtistTests
     public void Deactivate_WhenAlreadyInactive_ReturnsFailure()
     {
         var artist = Artist.Create(new ArtistId(Guid.NewGuid()), "TestArtist").Value;
-        var result = artist.DeActivate();
+        artist.DeActivate();
         
-        result = artist.DeActivate();
+        var result = artist.DeActivate();
         
         Assert.True(result.IsFailure);
         Assert.Equal(Errors.Artist.AlreadyInactive, result.Error);

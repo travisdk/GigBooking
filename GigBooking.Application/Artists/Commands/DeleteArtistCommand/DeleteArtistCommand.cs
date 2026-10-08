@@ -4,7 +4,7 @@ using GigBooking.Domain.ValueObjects;
 using MediatR;
 using GigBooking.Domain;
 
-namespace GigBooking.Application.Artists.Commands;
+namespace GigBooking.Application.Artists.Commands.DeleteArtistCommand;
 
 public sealed record DeleteArtistCommand(Guid Id) : IRequest<Result>;
 

@@ -16,7 +16,7 @@ public class VenueRepository : IVenueRepository
 
     public async Task<IEnumerable<Venue>> GetAllVenuesAsync(CancellationToken ctx)
     {
-        var venues = await _context.Set<Venue>().AsNoTracking().ToListAsync(ctx);
+        var venues = await _context.Set<Venue>().Where(v => v.IsActive).AsNoTracking().ToListAsync(ctx);
         return venues;
     }
 

@@ -23,6 +23,7 @@ public static class Errors
         public static readonly Error KeyNotFound = new Error("Venue.KeyNotFound", "The venue with the specified key was not found.");
         public static readonly Error EmptyVenueId = new Error("Venue.EmptyVenueId", "Venue identifier cannot be empty");
         public static readonly Error NullLocation = new Error("Venue.NullLocation", "Location cannot be null");
+        public static readonly Error AlreadyInactive = new Error("Venue.AlreadyInactive", "Venue is already inactive");
 
     }
     public static class Gig

@@ -1,6 +1,8 @@
 ﻿
 using GigBooking.Application.Artists.Commands;
 using GigBooking.Application.Artists.Commands.CreateArtistCommand;
+using GigBooking.Application.Artists.Commands.DeleteArtistCommand;
+using GigBooking.Application.Artists.Commands.UpdateArtistCommand;
 using GigBooking.Application.Artists.Queries.GetArtist;
 using GigBooking.Application.Artists.Queries.GetArtists;
 using GigBooking.Application.Gigs.Commands;
@@ -8,9 +10,13 @@ using GigBooking.Application.Gigs.DTOs;
 using GigBooking.Application.Gigs.Queries.GetGig;
 using GigBooking.Application.Gigs.Queries.GetGigs;
 using GigBooking.Application.Venues.Commands.CreateVenueCommand;
+using GigBooking.Application.Venues.Commands.DeleteVenueCommand;
+using GigBooking.Application.Venues.Commands.UpdateVenueCommand;
+
 using GigBooking.Application.Venues.Queries.GetVenue;
 using GigBooking.Application.Venues.Queries.GetVenues;
 using GigBooking.Domain;
+using GigBooking.Domain.ValueObjects;
 using MediatR;
 
 namespace GigBooking.WebAPI.Endpoints;
@@ -18,6 +24,7 @@ namespace GigBooking.WebAPI.Endpoints;
 public static class Endpoints
 {
     public sealed record UpdateArtistRequest(string Name); // helper
+    public sealed record UpdateVenueRequest(string Name, string Street, string PostalCode, string City, string CountryCode); // helper
      
 
     public static void MapEndpoints(this IEndpointRouteBuilder app)
@@ -60,6 +67,8 @@ public static class Endpoints
             GigDTO gig = result.Value;
             return Results.CreatedAtRoute("GetGigById", new { id = gig.Id }, gig);
         });
+
+
     }
 
 
@@ -157,6 +166,38 @@ public static class Endpoints
             var venue = result.Value;
             return Results.CreatedAtRoute("GetVenueById", new { id = venue.Id }, venue);
         });
+        venueGroup.MapPut("/{id:guid}", async (Guid id, UpdateVenueRequest request, ISender sender, CancellationToken ctx) =>
+        {
+            var locationResult = Location.Create(request.Street, request.PostalCode, request.City, request.CountryCode);
+            if (locationResult.IsFailure)
+            {
+                return Results.BadRequest(locationResult.Error);
+            }
+            UpdateVenueCommand command = new UpdateVenueCommand(id, request.Name, locationResult.Value);
 
+            var result = await sender.Send(command, ctx);
+            if (result.IsFailure)
+            {
+                return result.Error == Errors.Venue.KeyNotFound ? Results.NotFound(result.Error) 
+                  : Results.BadRequest(result.Error);
+            }
+            return Results.NoContent();
+        }).WithName("UpdateVenue");
+
+        venueGroup.MapDelete("/{id:guid}", async (Guid id, ISender sender, CancellationToken ctx)
+
+             =>
+        {
+            var command = new DeleteVenueCommand(id);
+            var result = await sender.Send(command, ctx);
+
+            if (result.IsFailure)
+            {
+                return result.Error == Errors.Venue.KeyNotFound ? Results.NotFound(result.Error) :
+                   Results.BadRequest(result.Error);
+            }
+            return Results.NoContent();
+
+        }).WithName("DeleteVenue");
     }
 }

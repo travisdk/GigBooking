@@ -25,5 +25,7 @@ public sealed class VenueConfiguration : IEntityTypeConfiguration<Venue>
             loc.Property(l => l.CountryCode).HasMaxLength(2).IsFixedLength().IsRequired();
 
         });
+        builder.Property(v => v.IsActive).IsRequired();
+
     }
 }

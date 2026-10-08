@@ -2,6 +2,7 @@
 using GigBooking.Application.Artists.DTOs;
 using GigBooking.Application.Venues.Commands.CreateVenueCommand;
 using GigBooking.Application.Venues.DTOs;
+using GigBooking.Domain;
 using GigBooking.Domain.Entities;
 
 using GigBooking.Domain.Primitives;
@@ -17,6 +18,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text;
 using Testcontainers.MsSql;
+using static GigBooking.WebAPI.Endpoints.Endpoints;
 namespace GigBooking.WebAPI.IntegrationTests.EndpointTests;
 
 public class VenueEndpointsTests : BaseEndpointTests
@@ -116,5 +118,164 @@ public class VenueEndpointsTests : BaseEndpointTests
         var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
         var entitiesInDb = await dbContext.Set<Venue>().CountAsync();
         Assert.Equal(0, entitiesInDb);
+    }
+    
+    [Fact]
+    public async Task Update_WhenDataIsValid_ReturnsNoContentAndPersistsToDatabase()
+    {
+        var venueGuid = Guid.NewGuid();
+        var venueName = "TestVenue";
+        var location = CreateValidLocation();
+        var venue = Venue.Create(new VenueId(venueGuid), venueName, location).Value;
+        await AddVenuesAsync(venue);
+        var newName = "NewName";
+        var newLocation = CreateValidLocation2();
+        var request = new UpdateVenueRequest(newName, newLocation.Street, newLocation.PostalCode, newLocation.City,
+               newLocation.CountryCode);
+
+        var response = await Client.PutAsJsonAsync($"{ApiRoutes.Venues.Prefix}/{venueGuid}", request);
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entityInDb = await dbContext.Set<Venue>().AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == venue.Id);
+        Assert.NotNull(entityInDb);
+        Assert.Equal(newName, entityInDb.Name);
+        Assert.Equal(newLocation, entityInDb.Location);
+
+    }
+
+
+    [Theory]
+    [InlineData("", "Street", "1000", "City", "DK", "Venue.NoName")]
+    [InlineData("   ", "Street", "1000", "City", "DK", "Venue.NoName")]
+    [InlineData("ValidName", "", "1000", "City", "DK", "Location.InvalidFields")] // eller den fejl Location.Create returnerer
+    [InlineData("ValidName", "Street", "", "City", "DK", "Location.InvalidFields")]
+    [InlineData("ValidName", "Street", "1000", "", "DK", "Location.InvalidFields")]
+    [InlineData("ValidName", "Street", "1000", "City", "", "Location.InvalidCountryCode")]
+    public async Task Update_NameOrLocationPropertyIsMissing_ReturnsBadRequestAndDoesNotPersist(
+        string name, string street, string postalCode, string city, string countryCode,
+         string expectedErrorCode
+        )
+    {
+        var venueGuid = Guid.NewGuid();
+        var location = CreateValidLocation();
+        var venue = Venue.Create(new VenueId(venueGuid), "TestVenue", location).Value;
+        await AddVenuesAsync(venue);
+        var request = new UpdateVenueRequest(name, street, postalCode, city,
+             countryCode);
+
+        var response = await Client.PutAsJsonAsync($"{ApiRoutes.Venues.Prefix}/{venueGuid}", request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<Error>();
+        Assert.NotNull(error);
+        Assert.Equal(expectedErrorCode, error.Code);
+
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entityInDb = await dbContext.Set<Venue>().AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == venue.Id);
+
+        Assert.NotNull(entityInDb);
+        Assert.Equal("TestVenue", entityInDb.Name);
+        Assert.Equal(location, entityInDb.Location);
+    }
+
+    [Fact]
+    public async Task Update_WhenVenueIsNotFound_ReturnsFailureAndDoesNotPersist()
+    {
+        var venueGuid = Guid.NewGuid();
+        var venueName = "TestVenue";
+        var location = CreateValidLocation();
+        var venue = Venue.Create(new VenueId(venueGuid), venueName, location).Value;
+        await AddVenuesAsync(venue);
+        var newName = "NewName";
+        var newLocation = CreateValidLocation2();
+        var request = new UpdateVenueRequest(newName, newLocation.Street, newLocation.PostalCode, newLocation.City,
+               newLocation.CountryCode);
+        var wrongGuid = Guid.NewGuid();
+
+        var response = await Client.PutAsJsonAsync($"{ApiRoutes.Venues.Prefix}/{wrongGuid}", request);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var error = await response.Content.ReadFromJsonAsync<Error>();
+        Assert.Equal(Errors.Venue.KeyNotFound, error);
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entityInDb = await dbContext.Set<Venue>().AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == venue.Id);
+        Assert.NotNull(entityInDb);
+        Assert.Equal("TestVenue", entityInDb.Name);
+        Assert.Equal(location, entityInDb.Location);
+
+    }
+    [Fact]
+    public async Task Delete_WhenVenueIsActive_ReturnsNoContentAndPersistsToDatabase()
+    {
+        var venueGuid = Guid.NewGuid();
+        var venueName = "TestVenue";
+        var location = CreateValidLocation();
+        var venue = Venue.Create(new VenueId(venueGuid), venueName, location).Value;
+        await AddVenuesAsync(venue); // active by default
+
+        var response = await Client.DeleteAsync($"{ApiRoutes.Venues.Prefix}/{venueGuid}");
+
+        Assert.Equal(HttpStatusCode.NoContent, response.StatusCode);
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entityInDb = await dbContext.Set<Venue>().AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == venue.Id);
+        Assert.NotNull(entityInDb);
+        Assert.False(entityInDb.IsActive);
+    }
+
+    [Fact]
+    public async Task Delete_WhenVenueIsAlreadyInactive_ReturnsBadRequestAndDoesNotPersistToDatabase()
+    {
+        var venueGuid = Guid.NewGuid();
+        var venueName = "TestVenue";
+        var location = CreateValidLocation();
+        var venue = Venue.Create(new VenueId(venueGuid), venueName, location).Value;
+        venue.DeActivate();
+        await AddVenuesAsync(venue);
+
+        var response = await Client.DeleteAsync($"{ApiRoutes.Venues.Prefix}/{venueGuid}");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<Error>();
+        Assert.NotNull(result);
+        Assert.Equal(Domain.Errors.Venue.AlreadyInactive, result);
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entityInDb = await dbContext.Set<Venue>().AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == venue.Id);
+        Assert.NotNull(entityInDb); // still there
+        Assert.False(entityInDb.IsActive);
+    }
+
+
+    [Fact]
+    public async Task Delete_WhenVenueIsNotFound_ReturnsNotFound()
+    {
+        var venueGuid = Guid.NewGuid();
+        var venueName = "TestVenue";
+        var location = CreateValidLocation();
+        var venue = Venue.Create(new VenueId(venueGuid), venueName, location).Value;
+        await AddVenuesAsync(venue);
+        var wrongGuid = Guid.NewGuid();
+
+        var response = await Client.DeleteAsync($"{ApiRoutes.Venues.Prefix}/{wrongGuid}");
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        var result = await response.Content.ReadFromJsonAsync<Error>();
+        Assert.NotNull(result);
+        Assert.Equal(Domain.Errors.Venue.KeyNotFound, result);
+        using var scope = Factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var entityInDb = await dbContext.Set<Venue>().AsNoTracking()
+            .FirstOrDefaultAsync(v => v.Id == venue.Id);
+        Assert.NotNull(entityInDb); // still there
     }
 }
