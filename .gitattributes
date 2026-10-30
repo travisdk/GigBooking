@@ -61,3 +61,11 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Ignorer genererede HTML-rapporter eller statiske HTML-filer i sprogstatistikken
+*.html linguist-vendored
+*.htm linguist-vendored
+
+# Eller gør det gældende for en hel mappe (f.eks. coverage-rapporter)
+coverage/** linguist-vendored
+wwwroot/** linguist-vendored
